@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Vue App</string>
+    <string name="title_activity_main">Vue App</string>
+    <string name="package_name">xyz.enoki.vue.app</string>
+    <string name="custom_url_scheme">xyz.enoki.vue.app</string>
+</resources>

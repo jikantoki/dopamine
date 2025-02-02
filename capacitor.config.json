@@ -1,0 +1,9 @@
+{
+  "appId": "xyz.enoki.vue.app",
+  "appName": "Vue App",
+  "webDir": "dist",
+  "server": {
+    "url": "http://192.168.11.108:8080",
+    "cleartext": true
+  }
+}
