@@ -4,22 +4,58 @@
       .folder-title {{ folder.title }}
       .folder-file
         .play-button(v-for="(file, fileIndex) in folder.files")
-          p(@click="play(file)") {{ file }}
-
+          p(@click="play(file, folderIndex, fileIndex)") {{ file.address }}
+    playerTabVue(
+      mini=true
+      :filename="currentFilename"
+      :status="status"
+      @prev="prevButton"
+      @play="playButton"
+      @pause="pauseButton"
+      @next="nextButton"
+    )
 </template>
 
 <script>
+import playerTabVue from './playerTab.vue'
 export default {
+  components: {
+    playerTabVue,
+  },
   props: {
     /** 読み込んだファイル達 */
     files: {
       type: Array,
     },
+    /** 再生中フラグBoolean */
+    status: {
+      type: Boolean,
+    },
+    /** 今再生しているファイル名 */
+    currentFilename: {
+      type: String,
+    },
   },
   methods: {
     /** 初めから楽曲再生 */
-    play(filename) {
-      this.$emit('play', filename)
+    play(file, folderIndex, fileIndex) {
+      this.$emit('play', file, folderIndex, fileIndex)
+    },
+    /** 初めから楽曲再生 */
+    playButton() {
+      this.$emit('playButton')
+    },
+    /** 一時停止 */
+    pauseButton() {
+      this.$emit('pauseButton')
+    },
+    /** 戻る */
+    prevButton() {
+      this.$emit('prevButton')
+    },
+    /** 進む */
+    nextButton() {
+      this.$emit('nextButton')
     },
   },
 }
