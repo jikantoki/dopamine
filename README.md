@@ -1,4 +1,8 @@
-# Vue Android App Template
+# Dopamine
+
+Android Music Player
+
+## Vue Android App Template
 
 Vue.js で Android ネイティブアプリを作るテンプレート
 

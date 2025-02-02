@@ -1,11 +1,11 @@
 {
-  "name": "vue-android-app-template",
-  "description": "Vue.js で Android ネイティブアプリを作るテンプレート",
+  "name": "dopamine",
+  "description": "Android Music Player",
   "version": "0.1.0",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com:jikantoki/Vue-Android-APK-Template.git"
+    "url": "git+ssh://git@github.com:jikantoki/dopamine.git"
   },
   "author": {
     "name": "jikantoki",

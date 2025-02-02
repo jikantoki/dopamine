@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Vue App</string>
-    <string name="title_activity_main">Vue App</string>
-    <string name="package_name">xyz.enoki.vue.app</string>
-    <string name="custom_url_scheme">xyz.enoki.vue.app</string>
+    <string name="app_name">Dopamine</string>
+    <string name="title_activity_main">Dopamine</string>
+    <string name="package_name">xyz.enoki.dopamine</string>
+    <string name="custom_url_scheme">xyz.enoki.dopamine</string>
 </resources>
