@@ -37,7 +37,7 @@ import filesTab from '/src/components/filesTab.vue'
 import playerTab from '/src/components/playerTab.vue'
 import { CapacitorMusicControls } from 'capacitor-music-controls-plugin'
 const MP3Tag = require('mp3tag.js')
-//import { Toast } from '@capacitor/toast'
+import { Toast } from '@capacitor/toast'
 
 export default {
   components: {
@@ -53,7 +53,7 @@ export default {
         /** フォルダー単位 */
         {
           title: 'きのこ鍋 - ときえのき',
-          /** ファイルのURL */
+          /** ファイル */
           files: [
             {
               address: '/assets/jikantoki/01 Split.mp3',
@@ -163,27 +163,41 @@ export default {
           fileIndex: 0,
         }
       }
+      Toast.show({ text: 'start' })
+      CapacitorMusicControls.create({
+        track: this.nowPlaying.title, // optional, default : ''
+        artist: this.nowPlaying.artist, // optional, default : ''
+        album: this.nowPlaying.album, // optional, default: ''
+        cover: '', // optional, default : nothing
+
+        // hide previous/next/close buttons:
+        hasPrev: false, // show previous button, optional, default: true
+        hasNext: false, // show next button, optional, default: true
+        hasClose: true, // show close button, optional, default: false
+
+        // Android only, all optional
+        isPlaying: true, // default : true
+        dismissable: true, // default : false
+        playIcon: 'media_play',
+        pauseIcon: 'media_pause',
+        prevIcon: 'media_prev',
+        nextIcon: 'media_next',
+        closeIcon: 'media_close',
+        notificationIcon: 'notification',
+      })
+        .then(() => {
+          // SUCCESS
+          Toast.show({ text: 'success' })
+        })
+        .catch((e) => {
+          console.log(e)
+        })
+      // TODO: Update playback state.
       const th = this
       setTimeout(function () {
         th.$refs.player.play()
         th.playStatus = true
-        CapacitorMusicControls.create({
-          track: 'Time is Running Out', // optional, default : ''
-          artist: 'Muse', // optional, default : ''
-          album: 'Absolution', // optional, default: ''
-          cover: 'albums/absolution.jpg', // optional, default : nothing
-          // cover can be a local path (use fullpath 'file:///storage/emulated/...',
-          // or only 'my_image.jpg' if my_image.jpg is in the www folder of your app)
-          // or a remote url ('http://...', 'https://...', 'ftp://...')
-        })
-          .then(() => {
-            // SUCCESS
-          })
-          .catch((e) => {
-            console.log(e)
-          })
-        // TODO: Update playback state.
-      })
+      }, 1)
     },
     pause() {
       this.$refs.player.pause()
@@ -253,12 +267,24 @@ export default {
     },
   },
   async mounted() {
-    const res = await fetch('/assets/jikantoki/01 Split.mp3')
-    const arybuf = await res.arrayBuffer()
-    const mp3tag = new MP3Tag(arybuf)
-    mp3tag.read()
-    if (mp3tag.error !== '') throw new Error(mp3tag.error)
-    else console.log(mp3tag.tags)
+    //全曲タグ検索する
+    this.files.forEach(async (folder, folderIndex) => {
+      folder.files.forEach(async (file, fileIndex) => {
+        const res = await fetch(file.address)
+        const arybuf = await res.arrayBuffer()
+        const mp3tag = new MP3Tag(arybuf)
+        mp3tag.read()
+        if (mp3tag.error !== '') throw new Error(mp3tag.error)
+        this.files[folderIndex].files[fileIndex].title = mp3tag.tags.title
+        if (!this.files[folderIndex].files[fileIndex].title) {
+          this.files[folderIndex].files[fileIndex].title = file.address
+        }
+        this.files[folderIndex].files[fileIndex].artist = mp3tag.tags.artist
+        this.files[folderIndex].files[fileIndex].album = mp3tag.tags.album
+      })
+    })
+
+    this.$refs.player.addEventListener('ended', () => this.next())
   },
 }
 </script>

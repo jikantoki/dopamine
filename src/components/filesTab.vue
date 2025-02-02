@@ -4,7 +4,7 @@
       .folder-title {{ folder.title }}
       .folder-file
         .play-button(v-for="(file, fileIndex) in folder.files")
-          p(@click="play(file, folderIndex, fileIndex)") {{ file.address }}
+          p(@click="play(file, folderIndex, fileIndex)") {{ file.title ? file.title : file.address }}
     playerTabVue(
       mini=true
       :filename="currentFilename"

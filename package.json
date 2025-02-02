@@ -20,6 +20,7 @@
   "dependencies": {
     "@capacitor/android": "^7.0.1",
     "@capacitor/app": "^7.0.0",
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/core": "^7.0.1",
     "@capacitor/toast": "^7.0.0",
     "@ionic/pwa-elements": "^3.3.0",

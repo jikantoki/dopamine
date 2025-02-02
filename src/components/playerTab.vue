@@ -1,6 +1,6 @@
 <template lang="pug">
   .playerTab
-    p {{ filename ? filename.address : null }} {{ mini }}
+    p {{ filename ? filename.title ? filename.title : filename.address : null }} {{ mini }}
     v-btn(icon="mdi-skip-previous" @click="prev()")
     v-btn(icon="mdi-play" @click="play()" v-show="!status")
     v-btn(icon="mdi-pause" @click="pause()" v-show="status")
