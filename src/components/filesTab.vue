@@ -10,6 +10,8 @@
       mini=true
       :filename="currentFilename"
       :status="status"
+      :duration="duration"
+      :currentTime="currentTime"
       @prev="prevButton"
       @play="playButton"
       @pause="pauseButton"
@@ -35,6 +37,16 @@ export default {
     /** 今再生しているファイル名 */
     currentFilename: {
       type: String,
+    },
+    /** 再生している曲の長さ */
+    duration: {
+      type: Number,
+      default: 0,
+    },
+    /** 現在の再生位置 */
+    currentTime: {
+      type: Number,
+      default: 0,
     },
   },
   methods: {

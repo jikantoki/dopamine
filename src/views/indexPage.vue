@@ -11,6 +11,8 @@
             playerTab(
               :filename="nowPlaying"
               :status="playStatus"
+              :duration="musicDuration"
+              :currentTime="currentTime"
               ref="playerTab"
               @prev="prev"
               @play="play"
@@ -21,6 +23,8 @@
             filesTab(
               :files="files"
               :status="playStatus"
+              :duration="musicDuration"
+              :currentTime="currentTime"
               @play="play"
               :currentFilename="nowPlaying"
               @prevButton="prev"
@@ -146,6 +150,10 @@ export default {
         /** 何番目のファイルか */
         fileIndex: 0,
       },
+      /** 曲の長さ */
+      musicDuration: 0,
+      /** 現在の再生位置 */
+      currentTime: 0,
     }
   },
   methods: {
@@ -207,6 +215,9 @@ export default {
           })
         // TODO: Update playback state.
       }
+      this.$refs.player.addEventListener('loadedmetadata', () => {
+        this.musicDuration = this.$refs.player.duration
+      })
       if (!standbyFlag) {
         CapacitorMusicControls.updateIsPlaying({
           isPlaying: true, // affects Android only
@@ -344,6 +355,10 @@ export default {
       notificationIcon: 'notification',
       ticker: 'Dopamine',
     })
+
+    setInterval(() => {
+      this.currentTime = this.$refs.player.currentTime
+    }, 50)
 
     //端末側の楽曲コントロールの命令用
     const th = this
