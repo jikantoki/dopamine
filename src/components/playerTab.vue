@@ -1,10 +1,20 @@
 <template lang="pug">
-  .playerTab
-    p {{ filename ? filename.title ? filename.title : filename.address : null }} {{ mini }}
-    v-btn(icon="mdi-skip-previous" @click="prev()")
-    v-btn(icon="mdi-play" @click="play()" v-show="!status")
-    v-btn(icon="mdi-pause" @click="pause()" v-show="status")
-    v-btn(icon="mdi-skip-next" @click="next()")
+  .player-tab(:class="mini ? 'mini' : 'notmini'")
+    .main-screen(v-if="!mini")
+      .cover-img
+        img(src='/thumbnail_default.jpg')
+      .title
+        p {{ filename ? filename.title ? filename.title : filename.address : null }}
+    .cover-img(v-if="mini")
+        img(src='/thumbnail_default.jpg')
+    .title(v-if="mini")
+        p {{ filename ? filename.title ? filename.title : filename.address : null }}
+    .control-buttons
+      .buttons
+        v-btn(icon="mdi-skip-previous" @click="prev()")
+        v-btn(icon="mdi-play" @click="play()" v-show="!status")
+        v-btn(icon="mdi-pause" @click="pause()" v-show="status")
+        v-btn(icon="mdi-skip-next" @click="next()")
 </template>
 
 <script>
@@ -44,3 +54,48 @@ export default {
   },
 }
 </script>
+
+<style lang="scss" scoped>
+img {
+  width: 10em;
+}
+.player-tab.notmini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  height: 100%;
+  .main-screen > .cover-img {
+    img {
+      width: 80%;
+      max-width: 25em;
+      aspect-ratio: 1;
+      object-fit: cover;
+    }
+  }
+  .control-buttons {
+    flex: 1;
+    position: relative;
+    width: 100%;
+    .buttons {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+    }
+  }
+}
+.player-tab.mini {
+  display: flex;
+  .cover-img > img {
+    aspect-ratio: 1;
+    object-fit: cover;
+    width: 4em;
+  }
+  .title {
+    width: -webkit-fill-available;
+  }
+  .control-buttons > .buttons {
+    display: flex;
+  }
+}
+</style>

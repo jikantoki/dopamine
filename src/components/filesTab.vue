@@ -60,3 +60,14 @@ export default {
   },
 }
 </script>
+
+<style lang="scss" scoped>
+.files-tab {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  .folders {
+    height: -webkit-fill-available;
+  }
+}
+</style>

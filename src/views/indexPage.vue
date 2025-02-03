@@ -1,13 +1,13 @@
 <template lang="pug">
   v-main
-    v-card(style="height: 100%")
+    v-card.wrap-div
       v-tabs(v-model="tab" bg-color="primary" fixed-tabs)
         v-tab(value="player") Player
         v-tab(value="file") File
         v-tab(value="settings") Settings
-      v-card(style="height: inherit")
+      v-card.wrap-item
         v-window(v-model="tab" style="height: 100%")
-          v-window-item(value="player")
+          v-window-item.player-window(value="player")
             playerTab(
               :filename="nowPlaying"
               :status="playStatus"
@@ -17,7 +17,7 @@
               @pause="pause"
               @next="next"
             )
-          v-window-item(value="file")
+          v-window-item.player-window(value="file")
             filesTab(
               :files="files"
               :status="playStatus"
@@ -28,7 +28,8 @@
               @pauseButton="pause"
               @nextButton="next"
             )
-          v-window-item(value="settings") Settings
+          v-window-item.player-window(value="settings")
+            p Settings
   audio(:src="nowPlaying ? nowPlaying.address : null" ref="player")
 </template>
 
@@ -344,3 +345,19 @@ export default {
   },
 }
 </script>
+
+<style lang="scss">
+.wrap-div {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  height: 100vh;
+  width: 100vw;
+  .wrap-item {
+    flex: 1;
+    .player-window {
+      height: 100%;
+    }
+  }
+}
+</style>
