@@ -4,7 +4,8 @@
       .folder-title {{ folder.title }}
       .folder-file
         .play-button(v-for="(file, fileIndex) in folder.files")
-          p(@click="play(file, folderIndex, fileIndex)") {{ file.title ? file.title : file.address }}
+          img(:src="file.thumbnail")
+          p(@click="play(file, folderIndex, fileIndex)") {{ file.title ? `${file.title} - ${file.artist}` : file.address }}
     playerTabVue(
       mini=true
       :filename="currentFilename"
@@ -62,6 +63,9 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+img {
+  height: 2em;
+}
 .files-tab {
   display: flex;
   flex-direction: column;

@@ -295,6 +295,17 @@ export default {
         }
         this.files[folderIndex].files[fileIndex].artist = mp3tag.tags.artist
         this.files[folderIndex].files[fileIndex].album = mp3tag.tags.album
+        if (mp3tag.tags.v2.APIC) {
+          const fileType = mp3tag.tags.v2.APIC[0].type
+          //サムネイルはUnit8Array型式になっているので、Base64に変換する
+          const unit8array = new Uint8Array(mp3tag.tags.v2.APIC[0].data)
+          const base64 = btoa(
+            [...unit8array].map((n) => String.fromCharCode(n)).join('')
+          )
+          this.files[folderIndex].files[
+            fileIndex
+          ].thumbnail = `data:${fileType};base64,${base64}`
+        }
       })
     })
 

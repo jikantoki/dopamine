@@ -2,11 +2,11 @@
   .player-tab(:class="mini ? 'mini' : 'notmini'")
     .main-screen(v-if="!mini")
       .cover-img
-        img(src='/thumbnail_default.jpg')
+        img(:src='filename && filename.thumbnail ? filename.thumbnail : "/thumbnail_default.jpg"')
       .title
         p {{ filename ? filename.title ? filename.title : filename.address : null }}
     .cover-img(v-if="mini")
-        img(src='/thumbnail_default.jpg')
+      img(:src='filename && filename.thumbnail ? filename.thumbnail : "/thumbnail_default.jpg"')
     .title(v-if="mini")
         p {{ filename ? filename.title ? filename.title : filename.address : null }}
     .control-buttons
@@ -65,12 +65,15 @@ img {
   align-items: center;
   text-align: center;
   height: 100%;
-  .main-screen > .cover-img {
-    img {
-      width: 80%;
-      max-width: 25em;
-      aspect-ratio: 1;
-      object-fit: cover;
+  .main-screen {
+    width: 100%;
+    .cover-img {
+      img {
+        width: 80%;
+        max-width: 25em;
+        aspect-ratio: 1;
+        object-fit: cover;
+      }
     }
   }
   .control-buttons {
