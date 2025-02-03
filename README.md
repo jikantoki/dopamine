@@ -2,7 +2,7 @@
 
 Android Music Player
 
-<img width="240" src="/public/logo.png">
+<img width="240" src="./public/logo.png">
 
 ## 何ができる？
 
