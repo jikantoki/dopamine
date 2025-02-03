@@ -25,7 +25,7 @@ export default {
   },
   mounted() {},
   methods: {
-    /** 初めから楽曲再生 */
+    /** 楽曲再生 */
     play() {
       this.$emit('play')
     },

@@ -37,11 +37,11 @@ export default {
     },
   },
   methods: {
-    /** 初めから楽曲再生 */
+    /** 楽曲再生 */
     play(file, folderIndex, fileIndex) {
       this.$emit('play', file, folderIndex, fileIndex)
     },
-    /** 初めから楽曲再生 */
+    /** 楽曲再生 */
     playButton() {
       this.$emit('playButton')
     },

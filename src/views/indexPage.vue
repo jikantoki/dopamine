@@ -37,7 +37,7 @@ import filesTab from '/src/components/filesTab.vue'
 import playerTab from '/src/components/playerTab.vue'
 import { CapacitorMusicControls } from 'capacitor-music-controls-plugin'
 const MP3Tag = require('mp3tag.js')
-import { Toast } from '@capacitor/toast'
+//import { Toast } from '@capacitor/toast'
 
 export default {
   components: {
@@ -148,51 +148,61 @@ export default {
     }
   },
   methods: {
-    /** 初めから楽曲再生 */
+    /** 楽曲再生 */
     play(filename, folderIndex, fileIndex) {
+      /** 現在再生しているファイルと今から再生するファイルが違う場合はTrue */
+      let newfile = false
       if (filename) {
+        if (this.nowPlaying && filename.address != this.nowPlaying.address)
+          newfile = true
         this.nowPlaying = filename
         this.current = {
           folderIndex: folderIndex,
           fileIndex: fileIndex,
         }
+        //何も再生されてない場合、先頭の楽曲を再生
       } else if (!this.nowPlaying) {
+        newfile = true
         this.nowPlaying = this.files[0].files[0]
         this.current = {
           folderIndex: 0,
           fileIndex: 0,
         }
       }
-      Toast.show({ text: 'start' })
-      CapacitorMusicControls.create({
-        track: this.nowPlaying.title, // optional, default : ''
-        artist: this.nowPlaying.artist, // optional, default : ''
-        album: this.nowPlaying.album, // optional, default: ''
-        cover: '', // optional, default : nothing
+      if (newfile) {
+        CapacitorMusicControls.create({
+          track: this.nowPlaying.title, // optional, default : ''
+          artist: this.nowPlaying.artist, // optional, default : ''
+          album: this.nowPlaying.album, // optional, default: ''
+          cover: `thumbnail_default.jpg`, // optional, default : nothing
 
-        // hide previous/next/close buttons:
-        hasPrev: false, // show previous button, optional, default: true
-        hasNext: false, // show next button, optional, default: true
-        hasClose: true, // show close button, optional, default: false
+          // hide previous/next/close buttons:
+          hasPrev: false, // show previous button, optional, default: true
+          hasNext: false, // show next button, optional, default: true
+          hasClose: true, // show close button, optional, default: false
 
-        // Android only, all optional
-        isPlaying: true, // default : true
-        dismissable: true, // default : false
-        playIcon: 'media_play',
-        pauseIcon: 'media_pause',
-        prevIcon: 'media_prev',
-        nextIcon: 'media_next',
-        closeIcon: 'media_close',
-        notificationIcon: 'notification',
+          // Android only, all optional
+          isPlaying: true, // default : true
+          dismissable: true, // default : false
+          playIcon: 'media_play',
+          pauseIcon: 'media_pause',
+          prevIcon: 'media_prev',
+          nextIcon: 'media_next',
+          closeIcon: 'media_close',
+          notificationIcon: 'notification',
+          ticker: this.nowPlaying.title,
+        })
+          .then(() => {
+            // SUCCESS
+          })
+          .catch((e) => {
+            console.log(e)
+          })
+        // TODO: Update playback state.
+      }
+      CapacitorMusicControls.updateIsPlaying({
+        isPlaying: true, // affects Android only
       })
-        .then(() => {
-          // SUCCESS
-          Toast.show({ text: 'success' })
-        })
-        .catch((e) => {
-          console.log(e)
-        })
-      // TODO: Update playback state.
       const th = this
       setTimeout(function () {
         th.$refs.player.play()
@@ -202,6 +212,9 @@ export default {
     pause() {
       this.$refs.player.pause()
       this.playStatus = false
+      CapacitorMusicControls.updateIsPlaying({
+        isPlaying: false, // affects Android only
+      })
     },
     prev() {
       //同じフォルダーの前トラックへの移動を試みる
@@ -284,7 +297,50 @@ export default {
       })
     })
 
+    //終わったら次の曲の再生
     this.$refs.player.addEventListener('ended', () => this.next())
+
+    CapacitorMusicControls.create({
+      track: 'Dopamine', // optional, default : ''
+      cover: `thumbnail_default.jpg`, // optional, default : nothing
+
+      // hide previous/next/close buttons:
+      hasPrev: false, // show previous button, optional, default: true
+      hasNext: false, // show next button, optional, default: true
+      hasClose: true, // show close button, optional, default: false
+
+      // Android only, all optional
+      isPlaying: false, // default : true
+      dismissable: true, // default : false
+      playIcon: 'media_play',
+      pauseIcon: 'media_pause',
+      prevIcon: 'media_prev',
+      nextIcon: 'media_next',
+      closeIcon: 'media_close',
+      notificationIcon: 'notification',
+      ticker: 'Dopamine',
+    })
+
+    //端末側の楽曲コントロールの命令用
+    const th = this
+    document.addEventListener('controlsNotification', (event) => {
+      switch (event.message) {
+        case 'music-controls-previous':
+          th.prev()
+          break
+        case 'music-controls-play':
+          th.play()
+          break
+        case 'music-controls-pause':
+          th.pause()
+          break
+        case 'music-controls-next':
+          th.next()
+          break
+        default:
+          break
+      }
+    })
   },
 }
 </script>
