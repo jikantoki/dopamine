@@ -5,7 +5,6 @@
 
 <script>
 import { App } from '@capacitor/app'
-import { Toast } from '@capacitor/toast'
 export default {
   name: 'App',
 
@@ -21,7 +20,7 @@ export default {
       if (now != '/') {
         this.$router.back()
       } else {
-        Toast.show({ text: '消させないよ' })
+        App.minimizeApp()
       }
     })
   },
