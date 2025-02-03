@@ -2,6 +2,14 @@
 
 Android Music Player
 
+## 何ができる？
+
+私ときえのきが自作した曲が聞けるミュージックプレイヤー
+
+## Download
+
+リンク作ります
+
 ## Vue Android App Template
 
 Vue.js で Android ネイティブアプリを作るテンプレート
