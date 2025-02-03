@@ -14,10 +14,34 @@
         p.artist {{ filename && filename.artist ? filename.artist : null }}
     .control-buttons
       .buttons
-        v-btn.button(icon="mdi-skip-previous" @click="prev()")
-        v-btn.button(icon="mdi-play" @click="play()" v-show="!status")
-        v-btn.button(icon="mdi-pause" @click="pause()" v-show="status")
-        v-btn.button(icon="mdi-skip-next" @click="next()")
+        v-btn.button(
+          icon="mdi-skip-previous"
+          @click="prev()"
+          :size="mini ? 'small' : 'x-large'"
+          variant="text"
+        )
+        v-btn.button(
+          icon="mdi-play"
+          @click="play()"
+          v-show="!status"
+          :size="mini ? undefined : 'x-large'"
+          variant="outlined"
+          style="border-width: 4px"
+        )
+        v-btn.button(
+          icon="mdi-pause"
+          @click="pause()"
+          v-show="status"
+          :size="mini ? undefined : 'x-large'"
+          variant="outlined"
+          style="border-width: 4px"
+        )
+        v-btn.button(
+          icon="mdi-skip-next"
+          @click="next()"
+          :size="mini ? 'small' : 'x-large'"
+          variant="text"
+          )
 </template>
 
 <script>
@@ -81,7 +105,7 @@ img {
     }
     .cover-img {
       img {
-        width: 95%;
+        width: 90%;
         max-width: 25em;
         aspect-ratio: 1;
         object-fit: cover;
@@ -97,8 +121,9 @@ img {
       position: absolute;
       bottom: 0;
       width: 100%;
-      background: gray;
+      background: rgb(var(--v-theme-surface-light));
       padding: 1em;
+      align-items: center;
       .button {
         margin: 0 1em;
       }
@@ -107,7 +132,7 @@ img {
 }
 .player-tab.mini {
   display: flex;
-  background: gray;
+  background: rgb(var(--v-theme-surface-light));
   .cover-img > img {
     aspect-ratio: 1;
     object-fit: cover;
@@ -120,12 +145,16 @@ img {
     width: -webkit-fill-available;
     white-space: nowrap;
     overflow: hidden;
+    .title {
+      font-size: 1.5em;
+    }
   }
   .control-buttons {
     display: flex;
     .buttons {
       margin: auto;
       display: flex;
+      align-items: center;
       .button {
         margin: 0 0.2em;
       }

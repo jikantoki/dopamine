@@ -149,8 +149,14 @@ export default {
     }
   },
   methods: {
-    /** 楽曲再生 */
-    play(filename, folderIndex, fileIndex) {
+    /**
+     * 楽曲再生
+     * @param {Object} filename どのファイルを再生するか？
+     * @param {Number} folderIndex 何番目のフォルダー？
+     * @param {Number} fileIndex 何番目のファイル？
+     * @param {Boolean} standbyFlag Trueなら楽曲セットするが再生しない
+     */
+    play(filename, folderIndex, fileIndex, standbyFlag = false) {
       /** 現在再生しているファイルと今から再生するファイルが違う場合はTrue */
       let newfile = false
       if (filename) {
@@ -201,15 +207,18 @@ export default {
           })
         // TODO: Update playback state.
       }
-      CapacitorMusicControls.updateIsPlaying({
-        isPlaying: true, // affects Android only
-      })
-      const th = this
-      setTimeout(function () {
-        th.$refs.player.play()
-        th.playStatus = true
-      }, 1)
+      if (!standbyFlag) {
+        CapacitorMusicControls.updateIsPlaying({
+          isPlaying: true, // affects Android only
+        })
+        const th = this
+        setTimeout(function () {
+          th.$refs.player.play()
+          th.playStatus = true
+        }, 1)
+      }
     },
+    /** 一時停止 */
     pause() {
       this.$refs.player.pause()
       this.playStatus = false
@@ -217,6 +226,7 @@ export default {
         isPlaying: false, // affects Android only
       })
     },
+    /** 戻る */
     prev() {
       //同じフォルダーの前トラックへの移動を試みる
       if (
@@ -252,6 +262,7 @@ export default {
         )
       }
     },
+    /** 進む */
     next() {
       //同じフォルダーの次トラックへの移動を試みる
       if (
@@ -312,6 +323,7 @@ export default {
     //終わったら次の曲の再生
     this.$refs.player.addEventListener('ended', () => this.next())
 
+    //通知欄の再生ボタンを準備
     CapacitorMusicControls.create({
       track: 'Dopamine', // optional, default : ''
       cover: `thumbnail_default.jpg`, // optional, default : nothing
@@ -353,6 +365,8 @@ export default {
           break
       }
     })
+
+    this.play(undefined, undefined, undefined, true)
   },
 }
 </script>
