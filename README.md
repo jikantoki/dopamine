@@ -2,6 +2,8 @@
 
 Android Music Player
 
+![logo](/public/logo.png)
+
 ## 何ができる？
 
 私ときえのきが自作した曲が聞けるミュージックプレイヤー
