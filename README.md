@@ -8,7 +8,7 @@ Android Music Player
 
 ## Download
 
-リンク作ります
+[ここをクリックしてダウンロード](https://raw.githubusercontent.com/jikantoki/dopamine/refs/heads/master/dopamine.apk)
 
 ## Vue Android App Template
 
