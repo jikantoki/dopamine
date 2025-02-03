@@ -27,6 +27,7 @@
               :currentTime="currentTime"
               @play="play"
               :currentFilename="nowPlaying"
+              :currentFilePos="current"
               @prevButton="prev"
               @playButton="play"
               @pauseButton="pause"

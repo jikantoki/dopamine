@@ -3,9 +3,15 @@
     .folders(v-for="(folder, folderIndex) in files")
       .folder-title {{ folder.title }}
       .folder-file
-        .play-button(v-for="(file, fileIndex) in folder.files")
-          img(:src="file.thumbnail")
-          p(@click="play(file, folderIndex, fileIndex)") {{ file.title ? `${file.title} - ${file.artist}` : file.address }}
+        .play-button(
+          v-for="(file, fileIndex) in folder.files"
+          @click="play(file, folderIndex, fileIndex)"
+          :class="currentFilePos.folderIndex == folderIndex && currentFilePos.fileIndex == fileIndex ? 'now-playing' : ''"
+        )
+          img(v-if="file.thumbnail" :src="file.thumbnail")
+          .no-img(v-if="!file.thumbnail")
+          .text-music-info
+            p.title {{ file.title ? `${file.title} - ${file.artist}` : file.address }}
     playerTabVue(
       mini=true
       :filename="currentFilename"
@@ -37,6 +43,10 @@ export default {
     /** 今再生しているファイル名 */
     currentFilename: {
       type: String,
+    },
+    /** 今再生しているファイルの位置 */
+    currentFilePos: {
+      type: Object,
     },
     /** 再生している曲の長さ */
     duration: {
@@ -82,8 +92,40 @@ img {
   display: flex;
   flex-direction: column;
   height: 100%;
+  white-space: nowrap;
   .folders {
     height: -webkit-fill-available;
+    .folder-title {
+      font-size: 1.3em;
+      height: 2em;
+      align-content: center;
+      overflow: hidden;
+    }
+    .folder-file {
+      .now-playing {
+        background: rgb(var(--v-theme-surface-light));
+      }
+      .play-button {
+        display: flex;
+        align-items: center;
+        img,
+        .no-img {
+          width: 3em;
+          min-width: 3em;
+          height: 3em;
+          margin: 4px;
+          border-radius: 10%;
+        }
+        .text-music-info {
+          .title {
+            margin: 4px;
+            font-size: 1.3em;
+            overflow: hidden;
+            font-weight: 300;
+          }
+        }
+      }
+    }
   }
 }
 </style>
