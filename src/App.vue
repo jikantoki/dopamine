@@ -17,9 +17,12 @@ export default {
     document.title = 'Dopamine'
 
     App.addListener('backButton', () => {
-      console.log('back!')
-      Toast.show({ text: 'Back!' })
-      this.$router.back()
+      const now = location.pathname
+      if (now != '/') {
+        this.$router.back()
+      } else {
+        Toast.show({ text: '消させないよ' })
+      }
     })
   },
 }
