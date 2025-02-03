@@ -6,7 +6,7 @@ Android Music Player
 
 ## 何ができる？
 
-私ときえのきが自作した曲が聞けるミュージックプレイヤー
+私[ときえのき](https://enoki.xyz)が自作した曲が聞けるミュージックプレイヤー
 
 ## Download
 
