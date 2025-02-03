@@ -67,6 +67,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              duration: 0,
             },
             {
               address: '/assets/jikantoki/02 NULL.mp3',
@@ -74,6 +75,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              duration: 0,
             },
             {
               address: '/assets/jikantoki/03 Giveme.mp3',
@@ -81,6 +83,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              duration: 0,
             },
             {
               address: '/assets/jikantoki/04 深夜徘徊VS.mp3',
@@ -88,6 +91,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              duration: 0,
             },
             {
               address: '/assets/jikantoki/05 ENOKI HARDCORE β.mp3',
@@ -95,6 +99,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              duration: 0,
             },
             {
               address: '/assets/jikantoki/06 ENOKI GUITARPOP β.mp3',
@@ -102,6 +107,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              duration: 0,
             },
             {
               address: '/assets/jikantoki/07 ENOKI GAMECENTER β.mp3',
@@ -109,6 +115,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              duration: 0,
             },
             {
               address: '/assets/jikantoki/08 ENOKI HARDBASS β.mp3',
@@ -116,6 +123,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              duration: 0,
             },
             {
               address: '/assets/jikantoki/09 ENOKI PROGRESSIVE HOUSE β.mp3',
@@ -123,6 +131,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              duration: 0,
             },
             {
               address: '/assets/jikantoki/10 ENOKI TECHNOPOP β.mp3',
@@ -130,6 +139,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              duration: 0,
             },
             {
               address: '/assets/jikantoki/11 人生のタイムカプセル_初音ミク.mp3',
@@ -137,6 +147,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              duration: 0,
             },
           ],
         },
@@ -318,6 +329,12 @@ export default {
         }
         this.files[folderIndex].files[fileIndex].artist = mp3tag.tags.artist
         this.files[folderIndex].files[fileIndex].album = mp3tag.tags.album
+        const audio = new Audio()
+        audio.src = file.address
+        audio.load()
+        audio.addEventListener('loadedmetadata', () => {
+          this.files[folderIndex].files[fileIndex].duration = audio.duration
+        })
         if (mp3tag.tags.v2.APIC) {
           const fileType = mp3tag.tags.v2.APIC[0].type
           //サムネイルはUnit8Array型式になっているので、Base64に変換する
@@ -357,8 +374,13 @@ export default {
       ticker: 'Dopamine',
     })
 
+    //現在の再生位置をリアルタイムで伝える
     setInterval(() => {
-      this.currentTime = this.$refs.player.currentTime
+      if (this.$refs.player) {
+        this.currentTime = this.$refs.player.currentTime
+      } else {
+        this.currentTime = 0
+      }
     }, 50)
 
     //端末側の楽曲コントロールの命令用
@@ -382,6 +404,7 @@ export default {
       }
     })
 
+    //スタンバイ
     this.play(undefined, undefined, undefined, true)
   },
 }

@@ -12,6 +12,8 @@
           .no-img(v-if="!file.thumbnail")
           .text-music-info
             p.title {{ file.title ? `${file.title} - ${file.artist}` : file.address }}
+            .duration
+              p {{ calcTime(file.duration) }}
     playerTabVue(
       mini=true
       :filename="currentFilename"
@@ -80,6 +82,12 @@ export default {
     nextButton() {
       this.$emit('nextButton')
     },
+    /** 秒（Number）を分:秒（String）に変換 */
+    calcTime(sec) {
+      const calcedSec = Math.floor(sec % 60)
+      const min = Math.floor((sec % 3600) / 60)
+      return `${String(min).padStart(2, 0)}:${String(calcedSec).padStart(2, 0)}`
+    },
   },
 }
 </script>
@@ -104,10 +112,15 @@ img {
     .folder-file {
       .now-playing {
         background: rgb(var(--v-theme-surface-light));
+        .text-music-info > .duration {
+          background: rgb(var(--v-theme-surface-light)) !important;
+        }
       }
       .play-button {
         display: flex;
         align-items: center;
+        max-width: 100%;
+        position: relative;
         img,
         .no-img {
           width: 3em;
@@ -117,11 +130,24 @@ img {
           border-radius: 10%;
         }
         .text-music-info {
+          margin: 4px;
+          display: flex;
+          align-items: center;
+          font-size: 1.3em;
+          justify-content: space-between;
+          width: -webkit-fill-available;
+          font-weight: 300;
           .title {
-            margin: 4px;
-            font-size: 1.3em;
             overflow: hidden;
-            font-weight: 300;
+          }
+          .duration {
+            position: absolute;
+            right: 0;
+            background: rgb(var(--v-theme-surface));
+            padding: 4px;
+            p {
+              opacity: 0.5;
+            }
           }
         }
       }
