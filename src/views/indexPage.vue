@@ -13,12 +13,15 @@
               :status="playStatus"
               :duration="musicDuration"
               :currentTime="currentTime"
+              :currentFolder="files[current.folderIndex].title"
+              :fileIndex="current.fileIndex"
               ref="playerTab"
               @prev="prev"
               @play="play"
               @pause="pause"
               @next="next"
               @move="move"
+              @goFile="tab='file'"
             )
           v-window-item.player-window(value="file")
             filesTab(

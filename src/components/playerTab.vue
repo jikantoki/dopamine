@@ -29,34 +29,61 @@
           p.artist {{ filename && filename.artist ? filename.artist : null }}
       .control-buttons
         .buttons
-          v-btn.button(
-            icon="mdi-skip-previous"
-            @click="prev()"
-            :size="mini ? 'small' : 'x-large'"
-            variant="text"
-          )
-          v-btn.button(
-            icon="mdi-play"
-            @click="play()"
-            v-show="!status"
-            :size="mini ? undefined : 'x-large'"
-            variant="outlined"
-            style="border-width: 4px"
-          )
-          v-btn.button(
-            icon="mdi-pause"
-            @click="pause()"
-            v-show="status"
-            :size="mini ? undefined : 'x-large'"
-            variant="outlined"
-            style="border-width: 4px"
-          )
-          v-btn.button(
-            icon="mdi-skip-next"
-            @click="next()"
-            :size="mini ? 'small' : 'x-large'"
-            variant="text"
+          .main-buttons
+            v-btn.button(
+              icon="mdi-skip-previous"
+              @click="prev()"
+              :size="mini ? 'small' : 'x-large'"
+              variant="text"
             )
+            v-btn.button(
+              icon="mdi-play"
+              @click="play()"
+              v-show="!status"
+              :size="mini ? undefined : 'x-large'"
+              variant="outlined"
+              style="border-width: 4px"
+            )
+            v-btn.button(
+              icon="mdi-pause"
+              @click="pause()"
+              v-show="status"
+              :size="mini ? undefined : 'x-large'"
+              variant="outlined"
+              style="border-width: 4px"
+            )
+            v-btn.button(
+              icon="mdi-skip-next"
+              @click="next()"
+              :size="mini ? 'small' : 'x-large'"
+              variant="text"
+              )
+          .sub-buttons.left
+            v-btn.button(
+              v-if="!mini"
+              icon="mdi-shuffle"
+              size="x-large"
+              variant="text"
+              disabled
+            )
+          .sub-buttons.right
+            v-btn.button.right(
+              v-if="!mini"
+              icon="mdi-repeat-once"
+              size="x-large"
+              variant="text"
+              disabled
+            )
+      .info.py-2(v-if="!mini")
+        .speed
+          v-btn.py-2(
+            variant="text"
+          ) 1.0x
+        .index
+          v-btn.index-button.py-2(
+            variant="text"
+            @click="$emit('goFile')"
+          ) # {{ fileIndex + 1 }} of {{ currentFolder }} >>
     .progress(v-show="mini")
       v-progress-linear(
         :model-value="(currentTime / duration) * 100"
@@ -92,6 +119,16 @@ export default {
     },
     /** 現在の再生位置 */
     currentTime: {
+      type: Number,
+      default: 0,
+    },
+    /** 今再生しているファイルのフォルダー名 */
+    currentFolder: {
+      type: String,
+      default: '',
+    },
+    /** 今再生しているのはフォルダー内で何番目の曲か */
+    fileIndex: {
       type: Number,
       default: 0,
     },
@@ -168,7 +205,7 @@ img {
     height: 100%;
     .main-screen {
       width: 100%;
-      margin: 6em 0;
+      margin: 5em 0;
       .music-info {
         margin: 1em 3em;
         white-space: nowrap;
@@ -191,20 +228,55 @@ img {
         }
       }
     }
+    .info {
+      width: 100%;
+      background: rgb(var(--v-theme-surface-light));
+      position: relative;
+      height: 3em;
+      .speed,
+      .index {
+        position: absolute;
+        top: 50%;
+        transform: translate(0%, -50%);
+      }
+      .speed {
+        left: 0.2em;
+      }
+      .index {
+        right: 0.2em;
+        .index-button {
+          max-width: 80vw;
+          overflow: hidden;
+        }
+      }
+    }
   }
   .control-buttons {
     flex: 1;
     position: relative;
     width: 100%;
     .buttons {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      background: rgb(var(--v-theme-surface-light));
-      padding: 1em;
-      align-items: center;
-      .button {
-        margin: 0 1em;
+      .main-buttons {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        background: rgb(var(--v-theme-surface-light));
+        padding: 1em;
+        white-space: nowrap;
+        .button {
+          margin: 0 0.2em;
+        }
+      }
+      .sub-buttons {
+        position: absolute;
+        padding: 1em;
+        bottom: 0;
+      }
+      .left {
+        left: 0;
+      }
+      .right {
+        right: 0;
       }
     }
   }
@@ -225,18 +297,24 @@ img {
       width: -webkit-fill-available;
       white-space: nowrap;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       .title {
         font-size: 1.5em;
       }
     }
     .control-buttons {
-      display: flex;
       .buttons {
-        margin: auto;
         display: flex;
-        align-items: center;
-        .button {
-          margin: 0 0.2em;
+        height: 100%;
+        .main-buttons {
+          margin: auto;
+          display: flex;
+          align-items: center;
+          .button {
+            margin: 0 0.2em;
+          }
         }
       }
     }
