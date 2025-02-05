@@ -330,7 +330,6 @@ export default {
     },
     /** 再生位置の移動（moveValueパーセントまで曲を進める） */
     move(moveValue) {
-      console.log(moveValue)
       /** 現在再生中の曲の長さ */
       const duration = this.$refs.player.duration
       this.$refs.player.currentTime = (duration * moveValue) / 100

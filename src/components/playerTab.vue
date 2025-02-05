@@ -107,7 +107,6 @@ export default {
       /** 現在の再生位置（px） */
       const currentX = event.layerX
       /** シークバー全体の幅（px） */
-      console.log(event)
       const clientWidth = event.target.clientWidth
       this.$emit('move', (currentX / clientWidth) * 100)
     },
