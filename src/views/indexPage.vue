@@ -350,21 +350,12 @@ export default {
           this.files[folderIndex].files[fileIndex].duration = audio.duration
         })
         if (mp3tag.tags.v2.APIC) {
-          const fileType = mp3tag.tags.v2.APIC[0].type
+          const fileType = mp3tag.tags.v2.APIC[0].format
+          console.log(fileType)
           //サムネイルはUnit8Array型式になっているので、Base64に変換する
           const unit8array = new Uint8Array(mp3tag.tags.v2.APIC[0].data)
-          const base64 = btoa(
-            [...unit8array].map((n) => String.fromCharCode(n)).join('')
-          )
-          const bin = atob(
-            `data:${fileType};base64,${base64}`.replace(/^.*,/, '')
-          )
-          const buffer = new Uint8Array(bin.length)
-          for (let i = 0; i < bin.length; i++) {
-            buffer[i] = bin.charCodeAt(i)
-          }
-          const blob = new Blob([buffer], {
-            type: 'image/jpeg',
+          const blob = new Blob([unit8array], {
+            type: fileType,
           })
           const blobUrl = URL.createObjectURL(blob)
 
