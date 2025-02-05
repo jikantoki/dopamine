@@ -3,10 +3,11 @@
     .folders(v-for="(folder, folderIndex) in files")
       .folder-title {{ folder.title }}
       .folder-file
-        .play-button(
+        button.play-button(
           v-for="(file, fileIndex) in folder.files"
           @click="play(file, folderIndex, fileIndex)"
           :class="currentFilePos.folderIndex == folderIndex && currentFilePos.fileIndex == fileIndex ? 'now-playing' : ''"
+          v-ripple
         )
           img(v-if="file.thumbnail" :src="file.thumbnail")
           .no-img(v-if="!file.thumbnail")
@@ -120,6 +121,7 @@ img {
         display: flex;
         align-items: center;
         max-width: 100%;
+        width: 100%;
         position: relative;
         img,
         .no-img {
