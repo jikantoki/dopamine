@@ -8,7 +8,12 @@
           p.title {{ filename ? filename.title ? filename.title : filename.address : null }}
           p.artist {{ filename && filename.artist ? filename.artist : null }}
           p.album {{ filename && filename.album ? filename.album : null }}
-          .seek-bar.mt-12.mb-6(@click="seekbar")
+          .seek-bar.mt-12.mb-6(
+            @click="seekbar"
+            @touchstart.stop
+            @touchend.stop
+            @touchmove.stop="seekbar"
+          )
             v-progress-linear.my-2(
               :model-value="(currentTime / duration) * 100"
               height=10
@@ -56,11 +61,16 @@
       v-progress-linear(
         :model-value="(currentTime / duration) * 100"
         @click="seekbar"
+        @touchstart.stop
+        @touchend.stop
+        @touchmove.stop="seekbar"
         ref="miniProgress"
       )
 </template>
 
 <script>
+import { Toast } from '@capacitor/toast'
+
 export default {
   props: {
     filename: {
@@ -86,6 +96,12 @@ export default {
       default: 0,
     },
   },
+  data() {
+    return {
+      /** 最初の一回だけトーストを表示する用 */
+      toastOnce: false,
+    }
+  },
   methods: {
     /** 楽曲再生 */
     play() {
@@ -103,9 +119,27 @@ export default {
     next() {
       this.$emit('next')
     },
+    /** 再生位置の変更 */
     seekbar(event) {
+      if (!this.duration) {
+        //これをしないと1秒に数十回リクエストが来る
+        if (!this.toastOnce) {
+          this.toastOnce = true
+          console.log('0秒の曲でシークバーの移動はできません')
+          Toast.show({ text: 'エラー: リトライしてください' })
+          setTimeout((this.toastOnce = false), 5000)
+        }
+        return
+      }
       /** 現在の再生位置（px） */
-      const currentX = event.layerX
+      let currentX
+      if (event.layerX) {
+        currentX = event.layerX
+      } else {
+        /** event.target要素の左上のX座標 */
+        const DOMleft = event.target.getBoundingClientRect().left
+        currentX = event.touches[0].pageX - DOMleft
+      }
       /** シークバー全体の幅（px） */
       const clientWidth = event.target.clientWidth
       this.$emit('move', (currentX / clientWidth) * 100)

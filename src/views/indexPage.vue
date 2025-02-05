@@ -455,5 +455,6 @@ export default {
 }
 .v-progress-linear__determinate {
   pointer-events: none;
+  animation: none;
 }
 </style>
