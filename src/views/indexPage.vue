@@ -39,6 +39,8 @@
 </template>
 
 <script>
+// eslint-disable-next-line no-unused-vars
+import { Toast } from '@capacitor/toast'
 import filesTab from '/src/components/filesTab.vue'
 import playerTab from '/src/components/playerTab.vue'
 import { CapacitorMusicControls } from 'capacitor-music-controls-plugin'
@@ -179,7 +181,9 @@ export default {
     play(filename, folderIndex, fileIndex, standbyFlag = false) {
       /** 現在再生しているファイルと今から再生するファイルが違う場合はTrue */
       let newfile = false
+      //再生するファイルを指定している？
       if (filename) {
+        //現在再生しているファイルと、指定されているファイルが違うか？
         if (this.nowPlaying && filename.address != this.nowPlaying.address)
           newfile = true
         this.nowPlaying = filename
@@ -187,7 +191,7 @@ export default {
           folderIndex: folderIndex,
           fileIndex: fileIndex,
         }
-        //何も再生されてない場合、先頭の楽曲を再生
+        //指定がないので、とりあえず先頭をスタンバイ
       } else if (!this.nowPlaying) {
         newfile = true
         this.nowPlaying = this.files[0].files[0]
@@ -196,12 +200,14 @@ export default {
           fileIndex: 0,
         }
       }
-      if (newfile) {
+      if (newfile || standbyFlag) {
         CapacitorMusicControls.create({
           track: this.nowPlaying.title, // optional, default : ''
           artist: this.nowPlaying.artist, // optional, default : ''
           album: this.nowPlaying.album, // optional, default: ''
-          cover: `thumbnail_default.jpg`, // optional, default : nothing
+          cover: this.nowPlaying.thumbnail
+            ? this.nowPlaying.thumbnail
+            : 'thumbnail_default.jpg', // optional, default : nothing
 
           // hide previous/next/close buttons:
           hasPrev: false, // show previous button, optional, default: true
@@ -230,7 +236,14 @@ export default {
       this.$refs.player.addEventListener('loadedmetadata', () => {
         this.musicDuration = this.$refs.player.duration
       })
-      if (!standbyFlag) {
+      // audio要素が再生中でなければ、playingフラグを切る必要がある
+      if (standbyFlag) {
+        if (this.$refs.player.paused) {
+          CapacitorMusicControls.updateIsPlaying({
+            isPlaying: false, // affects Android only
+          })
+        }
+      } else {
         CapacitorMusicControls.updateIsPlaying({
           isPlaying: true, // affects Android only
         })
@@ -316,13 +329,14 @@ export default {
   },
   async mounted() {
     //全曲タグ検索する
+    //これは非同期で実行されているので、
+    //通知欄のデータ同期は手動で行う必要がある
     this.files.forEach(async (folder, folderIndex) => {
       folder.files.forEach(async (file, fileIndex) => {
         const res = await fetch(file.address)
         const arybuf = await res.arrayBuffer()
         const mp3tag = new MP3Tag(arybuf)
         mp3tag.read()
-        if (mp3tag.error !== '') throw new Error(mp3tag.error)
         this.files[folderIndex].files[fileIndex].title = mp3tag.tags.title
         if (!this.files[folderIndex].files[fileIndex].title) {
           this.files[folderIndex].files[fileIndex].title = file.address
@@ -345,6 +359,13 @@ export default {
           this.files[folderIndex].files[
             fileIndex
           ].thumbnail = `data:${fileType};base64,${base64}`
+          //最後の曲まで処理が終わったら、通知を更新するためにスタンバイを送る
+          if (
+            this.files.length - 1 == folderIndex &&
+            this.files[folderIndex].files.length - 1 == fileIndex
+          ) {
+            this.play(undefined, undefined, undefined, true)
+          }
         }
       })
     })
@@ -416,7 +437,7 @@ export default {
   flex-direction: column;
   position: absolute;
   height: 100vh;
-  width: 100vw;
+  width: 100%;
   .wrap-item {
     flex: 1;
     .player-window {
