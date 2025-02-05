@@ -356,9 +356,19 @@ export default {
           const base64 = btoa(
             [...unit8array].map((n) => String.fromCharCode(n)).join('')
           )
-          this.files[folderIndex].files[
-            fileIndex
-          ].thumbnail = `data:${fileType};base64,${base64}`
+          const bin = atob(
+            `data:${fileType};base64,${base64}`.replace(/^.*,/, '')
+          )
+          const buffer = new Uint8Array(bin.length)
+          for (let i = 0; i < bin.length; i++) {
+            buffer[i] = bin.charCodeAt(i)
+          }
+          const blob = new Blob([buffer], {
+            type: 'image/jpeg',
+          })
+          const blobUrl = URL.createObjectURL(blob)
+
+          this.files[folderIndex].files[fileIndex].thumbnail = blobUrl
           //最後の曲まで処理が終わったら、通知を更新するためにスタンバイを送る
           if (
             this.files.length - 1 == folderIndex &&
