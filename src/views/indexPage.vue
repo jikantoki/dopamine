@@ -18,6 +18,7 @@
               @play="play"
               @pause="pause"
               @next="next"
+              @move="move"
             )
           v-window-item.player-window(value="file")
             filesTab(
@@ -32,6 +33,7 @@
               @playButton="play"
               @pauseButton="pause"
               @nextButton="next"
+              @move="move"
             )
           v-window-item.player-window(value="settings")
             p Settings
@@ -326,6 +328,13 @@ export default {
         this.play(this.files[0].files[0], 0, 0)
       }
     },
+    /** 再生位置の移動（moveValueパーセントまで曲を進める） */
+    move(moveValue) {
+      console.log(moveValue)
+      /** 現在再生中の曲の長さ */
+      const duration = this.$refs.player.duration
+      this.$refs.player.currentTime = (duration * moveValue) / 100
+    },
   },
   async mounted() {
     //全曲タグ検索する
@@ -351,7 +360,6 @@ export default {
         })
         if (mp3tag.tags.v2.APIC) {
           const fileType = mp3tag.tags.v2.APIC[0].format
-          console.log(fileType)
           //サムネイルはUnit8Array型式になっているので、Base64に変換する
           const unit8array = new Uint8Array(mp3tag.tags.v2.APIC[0].data)
           const blob = new Blob([unit8array], {
@@ -445,5 +453,8 @@ export default {
       height: 100%;
     }
   }
+}
+.v-progress-linear__determinate {
+  pointer-events: none;
 }
 </style>

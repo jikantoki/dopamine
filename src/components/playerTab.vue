@@ -8,10 +8,12 @@
           p.title {{ filename ? filename.title ? filename.title : filename.address : null }}
           p.artist {{ filename && filename.artist ? filename.artist : null }}
           p.album {{ filename && filename.album ? filename.album : null }}
-          v-progress-linear.my-8(
-            :model-value="(currentTime / duration) * 100"
-            height=10
-          )
+          .seek-bar.mt-12.mb-6(@click="seekbar")
+            v-progress-linear.my-2(
+              :model-value="(currentTime / duration) * 100"
+              height=10
+              ref="notMiniProgress"
+            )
           .time
             p {{ calcTime(currentTime) }}
             p {{ calcTime(duration) }}
@@ -51,7 +53,11 @@
             variant="text"
             )
     .progress(v-show="mini")
-      v-progress-linear(:model-value="(currentTime / duration) * 100")
+      v-progress-linear(
+        :model-value="(currentTime / duration) * 100"
+        @click="seekbar"
+        ref="miniProgress"
+      )
 </template>
 
 <script>
@@ -96,6 +102,14 @@ export default {
     /** 進む */
     next() {
       this.$emit('next')
+    },
+    seekbar(event) {
+      /** 現在の再生位置（px） */
+      const currentX = event.layerX
+      /** シークバー全体の幅（px） */
+      console.log(event)
+      const clientWidth = event.target.clientWidth
+      this.$emit('move', (currentX / clientWidth) * 100)
     },
     /** 秒（Number）を分:秒（String）に変換 */
     calcTime(sec) {

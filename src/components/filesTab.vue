@@ -25,6 +25,7 @@
       @play="playButton"
       @pause="pauseButton"
       @next="nextButton"
+      @move="move"
     )
 </template>
 
@@ -82,6 +83,10 @@ export default {
     /** 進む */
     nextButton() {
       this.$emit('nextButton')
+    },
+    /** move */
+    move(moveValue) {
+      this.$emit('move', moveValue)
     },
     /** 秒（Number）を分:秒（String）に変換 */
     calcTime(sec) {
