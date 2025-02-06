@@ -40,6 +40,7 @@ Android
 
 ```shell
 yarn install
+npm install pug#何故か別で書かないと動かない
 ```
 
 ### ブラウザ上での動作確認
