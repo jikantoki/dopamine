@@ -289,6 +289,7 @@ export default {
         const th = this
         setTimeout(function () {
           th.$refs.player.play()
+          th.$refs.player.playbackRate = th.speed
           th.playStatus = true
         }, 1)
       }
