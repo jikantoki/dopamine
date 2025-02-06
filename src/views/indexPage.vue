@@ -15,6 +15,8 @@
               :currentTime="currentTime"
               :currentFolder="files[current.folderIndex].title"
               :fileIndex="current.fileIndex"
+              :repeat="repeat"
+              :random="random"
               ref="playerTab"
               @prev="prev"
               @play="play"
@@ -22,6 +24,8 @@
               @next="next"
               @move="move"
               @goFile="tab='file'"
+              @random="random = !random"
+              @repeat="repeat = !repeat"
             )
           v-window-item.player-window(value="file")
             filesTab(
@@ -172,6 +176,10 @@ export default {
           ],
         },
       ],
+      /** リピートするか？ */
+      repeat: false,
+      /** ランダム再生するか？ */
+      random: false,
       /** 再生中の曲の情報（this.files[xxx].files[xxx]の情報が入る） */
       nowPlaying: null,
       /** 現在再生中か？Boolean */
@@ -328,8 +336,24 @@ export default {
         )
       }
     },
-    /** 進む */
-    next() {
+    /**
+     * 進む
+     * @param {Boolean} [forcePlay = false] Trueにすると強制的に再生開始
+     */
+    next(forcePlay = false) {
+      //リピートフラグが立っていたら、同じ曲を流す
+      console.log(this.$refs.player.paused)
+      Toast.show({ text: this.$refs.player.paused })
+      if (this.repeat) {
+        this.play(
+          this.files[this.current.folderIndex].files[this.current.fileIndex],
+          this.current.folderIndex,
+          this.current.fileIndex,
+          this.$refs.player.paused && !forcePlay
+        )
+        this.$refs.player.currentTime = 0
+        return
+      }
       //同じフォルダーの次トラックへの移動を試みる
       if (
         this.files[this.current.folderIndex].files[this.current.fileIndex + 1]
@@ -340,7 +364,7 @@ export default {
           ],
           this.current.folderIndex,
           this.current.fileIndex + 1,
-          this.$refs.player.paused
+          this.$refs.player.paused && !forcePlay
         )
         //ない場合は、次フォルダーの最初のトラックへの移動を試みる
       } else if (
@@ -351,11 +375,16 @@ export default {
           this.files[this.current.folderIndex + 1].files[0],
           this.current.folderIndex + 1,
           0,
-          this.$refs.player.paused
+          this.$refs.player.paused && !forcePlay
         )
         //それもなければ、最初のフォルダーの最初への移動を試みる
       } else {
-        this.play(this.files[0].files[0], 0, 0, this.$refs.player.paused)
+        this.play(
+          this.files[0].files[0],
+          0,
+          0,
+          this.$refs.player.paused && !forcePlay
+        )
       }
     },
     /** 再生位置の移動（moveValueパーセントまで曲を進める） */
@@ -468,7 +497,7 @@ export default {
     })
 
     //終わったら次の曲の再生
-    this.$refs.player.addEventListener('ended', () => this.next())
+    this.$refs.player.addEventListener('ended', () => this.next(true))
 
     //通知欄の再生ボタンを準備
     CapacitorMusicControls.create({

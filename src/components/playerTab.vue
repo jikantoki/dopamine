@@ -64,7 +64,8 @@
               icon="mdi-shuffle"
               size="x-large"
               variant="text"
-              disabled
+              :style="random ? 'opacity: 1' : 'opacity: 0.5'"
+              @click="switchRandom(!random)"
             )
           .sub-buttons.right
             v-btn.button.right(
@@ -72,7 +73,8 @@
               icon="mdi-repeat-once"
               size="x-large"
               variant="text"
-              disabled
+              :style="repeat ? 'opacity: 1' : 'opacity: 0.5'"
+              @click="switchRepeat(!repeat)"
             )
       .info.py-2(v-if="!mini")
         .speed
@@ -132,6 +134,16 @@ export default {
       type: Number,
       default: 0,
     },
+    /** リピートするか？ */
+    repeat: {
+      type: Boolean,
+      default: false,
+    },
+    /** ランダム再生するか？ */
+    random: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -155,6 +167,14 @@ export default {
     /** 進む */
     next() {
       this.$emit('next')
+    },
+    /** ランダム再生をオン/オフ */
+    switchRandom(bool) {
+      this.$emit('random', bool)
+    },
+    /** リピート再生をオン/オフ */
+    switchRepeat(bool) {
+      this.$emit('repeat', bool)
     },
     /** 再生位置の変更 */
     seekbar(event) {
