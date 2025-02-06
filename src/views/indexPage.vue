@@ -256,6 +256,9 @@ export default {
           album: this.nowPlaying.album, // optional, default: ''
           cover: thumbnailURL, // optional, default : nothing
 
+          duration: this.nowPlaying.duration * 1000, // Android use ms
+          elapsed: 0,
+
           // hide previous/next/close buttons:
           hasPrev: false, // show previous button, optional, default: true
           hasNext: false, // show next button, optional, default: true
@@ -293,6 +296,12 @@ export default {
       } else {
         CapacitorMusicControls.updateIsPlaying({
           isPlaying: true, // affects Android only
+        })
+        //シークバーが動くようになったら、初めて動作するコード
+        //ワンチャンバグるかも
+        CapacitorMusicControls.updateElapsed({
+          elapsed: this.currentTime * 1000,
+          isPlaying: true,
         })
         const th = this
         setTimeout(function () {
