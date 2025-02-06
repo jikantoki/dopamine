@@ -300,7 +300,8 @@ export default {
             this.current.fileIndex - 1
           ],
           this.current.folderIndex,
-          this.current.fileIndex - 1
+          this.current.fileIndex - 1,
+          this.$refs.player.paused
         )
         //ない場合は、前フォルダーの最後トラックへの移動を試みる
       } else if (
@@ -312,7 +313,8 @@ export default {
             this.files[this.current.folderIndex - 1].files.length - 1
           ],
           this.current.folderIndex - 1,
-          this.files[this.current.folderIndex - 1].files.length - 1
+          this.files[this.current.folderIndex - 1].files.length - 1,
+          this.$refs.player.paused
         )
         //それもなければ、最後尾のフォルダーの最後尾への移動を試みる
       } else {
@@ -321,7 +323,8 @@ export default {
             this.files[this.files.length - 1].files.length - 1
           ],
           this.files.length - 1,
-          this.files[this.files.length - 1].files.length - 1
+          this.files[this.files.length - 1].files.length - 1,
+          this.$refs.player.paused
         )
       }
     },
@@ -336,7 +339,8 @@ export default {
             this.current.fileIndex + 1
           ],
           this.current.folderIndex,
-          this.current.fileIndex + 1
+          this.current.fileIndex + 1,
+          this.$refs.player.paused
         )
         //ない場合は、次フォルダーの最初のトラックへの移動を試みる
       } else if (
@@ -346,11 +350,12 @@ export default {
         this.play(
           this.files[this.current.folderIndex + 1].files[0],
           this.current.folderIndex + 1,
-          0
+          0,
+          this.$refs.player.paused
         )
         //それもなければ、最初のフォルダーの最初への移動を試みる
       } else {
-        this.play(this.files[0].files[0], 0, 0)
+        this.play(this.files[0].files[0], 0, 0, this.$refs.player.paused)
       }
     },
     /** 再生位置の移動（moveValueパーセントまで曲を進める） */
