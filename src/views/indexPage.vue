@@ -450,7 +450,7 @@ export default {
       await Filesystem.writeFile({
         path: `${this.dataDirectory}${path}`,
         data: data,
-        directory: Directory.Documents,
+        directory: Directory.External,
         encoding: saveAsUTF8 ? Encoding.UTF8 : undefined,
         recursive: true,
       })
@@ -459,7 +459,7 @@ export default {
     async readFile(path) {
       const contents = await Filesystem.readFile({
         path: `${this.dataDirectory}${path}`,
-        directory: Directory.Documents,
+        directory: Directory.External,
         encoding: Encoding.UTF8,
       })
       return contents
@@ -468,14 +468,14 @@ export default {
     async deleteFile(path) {
       await Filesystem.deleteFile({
         path: `${this.dataDirectory}${path}`,
-        directory: Directory.Documents,
+        directory: Directory.External,
       })
     },
     /** ストレージ上のファイルのフルパスを取得（file://型式） */
     async getUri(path) {
       const contents = await Filesystem.getUri({
         path: `${this.dataDirectory}${path}`,
-        directory: Directory.Documents,
+        directory: Directory.External,
       })
       return contents.uri
     },
