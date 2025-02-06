@@ -257,7 +257,7 @@ export default {
           cover: thumbnailURL, // optional, default : nothing
 
           duration: this.musicDuration * 1000, // Android use ms
-          elapsed: 0,
+          elapsed: this.currentTime * 1000,
 
           // hide previous/next/close buttons:
           hasPrev: false, // show previous button, optional, default: true
@@ -297,8 +297,6 @@ export default {
         CapacitorMusicControls.updateIsPlaying({
           isPlaying: true, // affects Android only
         })
-        //シークバーが動くようになったら、初めて動作するコード
-        //ワンチャンバグるかも
         CapacitorMusicControls.updateElapsed({
           elapsed: this.currentTime * 1000,
           isPlaying: true,
@@ -320,6 +318,10 @@ export default {
       this.playStatus = false
       CapacitorMusicControls.updateIsPlaying({
         isPlaying: false, // affects Android only
+      })
+      CapacitorMusicControls.updateElapsed({
+        elapsed: this.currentTime * 1000,
+        isPlaying: false,
       })
       //現在の状況をストレージに保存
       this.saveData()
@@ -709,6 +711,8 @@ export default {
     //端末側の楽曲コントロールの命令用
     const th = this
     document.addEventListener('controlsNotification', (event) => {
+      let position = 0
+      let parsent = 0
       switch (event.message) {
         case 'music-controls-previous':
           th.prev()
@@ -722,14 +726,14 @@ export default {
         case 'music-controls-next':
           th.next()
           break
+        case 'music-controls-seek-to':
+          position = event.position / 1000
+          parsent = (position / th.musicDuration) * 100
+          th.move(parsent)
+          break
         default:
           break
       }
-    })
-
-    //シークバー用（開発中）
-    document.addEventListener('controlsNotification', (event) => {
-      Toast.show({ text: JSON.stringify(event) })
     })
 
     //スタンバイ
