@@ -1,6 +1,6 @@
 {
-  "appId": "xyz.enoki.dopamine",
-  "appName": "Dopamine",
+  "appId": "xyz.enoki.dopamine.test",
+  "appName": "DEBUG",
   "webDir": "dist",
   "server": {
     "url": "http://192.168.11.108:8080",
