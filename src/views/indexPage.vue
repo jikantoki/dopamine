@@ -17,6 +17,7 @@
               :fileIndex="current.fileIndex"
               :repeat="repeat"
               :random="random"
+              :speed="speed"
               ref="playerTab"
               @prev="prev"
               @play="play"
@@ -26,6 +27,7 @@
               @goFile="tab='file'"
               @random="random = !random"
               @repeat="repeat = !repeat"
+              @speedChange="speedChange"
             )
           v-window-item.player-window(value="file")
             filesTab(
@@ -180,6 +182,8 @@ export default {
       repeat: false,
       /** ランダム再生するか？ */
       random: false,
+      /** 再生速度 */
+      speed: 1.0,
       /** 再生中の曲の情報（this.files[xxx].files[xxx]の情報が入る） */
       nowPlaying: null,
       /** 現在再生中か？Boolean */
@@ -409,6 +413,13 @@ export default {
           0,
           this.$refs.player.paused && !forcePlay
         )
+      }
+    },
+    /** 再生速度の変更 */
+    speedChange(newSpeed) {
+      if (newSpeed) {
+        this.$refs.player.playbackRate = newSpeed
+        this.speed = newSpeed
       }
     },
     /** 再生位置の移動（moveValueパーセントまで曲を進める） */

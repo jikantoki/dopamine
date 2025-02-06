@@ -80,7 +80,8 @@
         .speed
           v-btn.py-2(
             variant="text"
-          ) 1.0x
+            @click="speedDialog = true"
+          ) {{ speed.toFixed(2) }}x
         .index
           v-btn.index-button.py-2(
             variant="text"
@@ -95,12 +96,28 @@
         @touchmove.stop="seekbar"
         ref="miniProgress"
       )
+  v-dialog(v-model="speedDialog")
+    v-card(title="再生速度")
+      VNumberInput(
+        controlVariant="split"
+        label="スピードを入力"
+        v-model="speedInput"
+        :max="4"
+        :min="0.1"
+        :step="0.05"
+      )
+      v-card-actions
+        v-btn 決定
 </template>
 
 <script>
 import { Toast } from '@capacitor/toast'
+import { VNumberInput } from 'vuetify/labs/VNumberInput'
 
 export default {
+  components: {
+    VNumberInput,
+  },
   props: {
     filename: {
       type: String,
@@ -134,6 +151,11 @@ export default {
       type: Number,
       default: 0,
     },
+    /** 再生速度 */
+    speed: {
+      type: Number,
+      default: 1,
+    },
     /** リピートするか？ */
     repeat: {
       type: Boolean,
@@ -149,6 +171,10 @@ export default {
     return {
       /** 最初の一回だけトーストを表示する用 */
       toastOnce: false,
+      /** スピード調整ダイアログ表示用 */
+      speedDialog: false,
+      /** 内部入力用の再生速度 */
+      speedInput: 1,
     }
   },
   methods: {
@@ -206,6 +232,16 @@ export default {
       const calcedSec = Math.floor(sec % 60)
       const min = Math.floor((sec % 3600) / 60)
       return `${String(min).padStart(2, 0)}:${String(calcedSec).padStart(2, 0)}`
+    },
+  },
+  watch: {
+    speed: function (newSpeed) {
+      //index側で再生速度が変わっていたら、同期する
+      this.speedInput = newSpeed
+    },
+    speedInput: function (newSpeed) {
+      //再生速度を入力したら、即時反映させる
+      this.$emit('speedChange', newSpeed)
     },
   },
 }

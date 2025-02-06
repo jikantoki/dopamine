@@ -35,5 +35,6 @@ export default {
 <style>
 * {
   user-select: none;
+  text-transform: none;
 }
 </style>
