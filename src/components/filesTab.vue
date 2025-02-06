@@ -1,8 +1,12 @@
 <template lang="pug">
   .files-tab
     .folders(v-for="(folder, folderIndex) in files")
-      .folder-title {{ folder.title }}
-      .folder-file
+      .folder-title(
+        @click="folder.onDisplay = !folder.onDisplay"
+      )
+        p.folder-title-p {{ folder.title }}({{ folder.files.length }})
+        v-icon.folder-hidden-icon {{ folder.onDisplay ? 'mdi-folder-open-outline' : 'mdi-folder' }}
+      .folder-file(v-show="folder.onDisplay")
         button.play-button(
           v-for="(file, fileIndex) in folder.files"
           @click="play(file, folderIndex, fileIndex)"
@@ -114,6 +118,19 @@ img {
       height: 2em;
       align-content: center;
       overflow: hidden;
+      position: relative;
+      .folder-title-p,
+      .folder-hidden-icon {
+        position: absolute;
+        top: 50%;
+        transform: translate(0%, -50%);
+      }
+      .folder-title-p {
+        left: 0.1em;
+      }
+      .folder-hidden-icon {
+        right: 0.1em;
+      }
     }
     .folder-file {
       .now-playing {

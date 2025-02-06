@@ -72,6 +72,8 @@ export default {
         /** フォルダー単位 */
         {
           title: 'きのこ鍋 - ときえのき',
+          /** 画面に表示するか？ */
+          onDisplay: true,
           /** ファイル */
           files: [
             {
