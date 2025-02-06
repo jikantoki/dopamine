@@ -50,7 +50,7 @@ import filesTab from '/src/components/filesTab.vue'
 import playerTab from '/src/components/playerTab.vue'
 import { CapacitorMusicControls } from 'capacitor-music-controls-plugin'
 const MP3Tag = require('mp3tag.js')
-//import { Toast } from '@capacitor/toast'
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem'
 
 export default {
   components: {
@@ -73,7 +73,10 @@ export default {
               title: null,
               artist: null,
               album: null,
+              /** blob型式のサムネイルURL */
               thumbnail: null,
+              /** blob本体 */
+              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -82,6 +85,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -90,6 +94,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -98,6 +103,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -106,6 +112,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -114,6 +121,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -122,6 +130,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -130,6 +139,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -138,6 +148,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -146,6 +157,7 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -154,14 +166,20 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
+              thumbnailBlob: null,
               duration: 0,
             },
           ],
         },
       ],
+      /** 再生中の曲の情報（this.files[xxx].files[xxx]の情報が入る） */
       nowPlaying: null,
       /** 現在再生中か？Boolean */
       playStatus: false,
+      /** 現在表示中のサムネイルURL */
+      currentThumbnail: null,
+      /** 設定用ファイル保存パス */
+      dataDirectory: 'dopamine-data/',
       /** 現在再生しているファイル位置 */
       current: {
         /** 何番目のフォルダーか */
@@ -183,7 +201,7 @@ export default {
      * @param {Number} fileIndex 何番目のファイル？
      * @param {Boolean} standbyFlag Trueなら楽曲セットするが再生しない
      */
-    play(filename, folderIndex, fileIndex, standbyFlag = false) {
+    async play(filename, folderIndex, fileIndex, standbyFlag = false) {
       /** 現在再生しているファイルと今から再生するファイルが違う場合はTrue */
       let newfile = false
       //再生するファイルを指定している？
@@ -205,14 +223,18 @@ export default {
           fileIndex: 0,
         }
       }
+      let thumbnailURL = 'thumbnail_default.jpg'
+      if (this.nowPlaying.thumbnailBlob) {
+        const base64 = await this.blobToBase64(this.nowPlaying.thumbnailBlob)
+        await this.writeFile('current-thumbnail.jpg', base64, false)
+        thumbnailURL = await this.getUri('current-thumbnail.jpg')
+      }
       if (newfile || standbyFlag) {
         CapacitorMusicControls.create({
           track: this.nowPlaying.title, // optional, default : ''
           artist: this.nowPlaying.artist, // optional, default : ''
           album: this.nowPlaying.album, // optional, default: ''
-          cover: this.nowPlaying.thumbnail
-            ? this.nowPlaying.thumbnail
-            : 'thumbnail_default.jpg', // optional, default : nothing
+          cover: thumbnailURL, // optional, default : nothing
 
           // hide previous/next/close buttons:
           hasPrev: false, // show previous button, optional, default: true
@@ -337,8 +359,66 @@ export default {
       const duration = this.$refs.player.duration
       this.$refs.player.currentTime = (duration * moveValue) / 100
     },
+    /** blobをbase64に変換 */
+    blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result)
+        reader.onerror = reject
+        reader.readAsDataURL(blob)
+      })
+    },
+    /**
+     * ストレージにファイル書き込み
+     * @param {String} path 保存パス
+     * @param {*} data 保存するデータ
+     * @param {boolean} [saveAsUTF8=true] 画像とか保存するときはfalse
+     */
+    async writeFile(path, data, saveAsUTF8 = true) {
+      await Filesystem.writeFile({
+        path: `${this.dataDirectory}${path}`,
+        data: data,
+        directory: Directory.Documents,
+        encoding: saveAsUTF8 ? Encoding.UTF8 : undefined,
+        recursive: true,
+      })
+    },
+    /** ストレージからファイル読み込み */
+    async readFile(path) {
+      const contents = await Filesystem.readFile({
+        path: `${this.dataDirectory}${path}`,
+        directory: Directory.Documents,
+        encoding: Encoding.UTF8,
+      })
+      return contents
+    },
+    /** ストレージからファイル削除 */
+    async deleteFile(path) {
+      await Filesystem.deleteFile({
+        path: `${this.dataDirectory}${path}`,
+        directory: Directory.Documents,
+      })
+    },
+    /** ストレージ上のファイルのフルパスを取得（file://型式） */
+    async getUri(path) {
+      const contents = await Filesystem.getUri({
+        path: `${this.dataDirectory}${path}`,
+        directory: Directory.Documents,
+      })
+      return contents.uri
+    },
   },
   async mounted() {
+    try {
+      await this.writeFile('text.txt', 'This is あ test')
+      await this.readFile('text.txt')
+      await this.getUri('text.txt')
+      await this.deleteFile('text.txt')
+    } catch (e) {
+      console.log(e)
+      Toast.show({ text: String(e) })
+    }
+
     //全曲タグ検索する
     //これは非同期で実行されているので、
     //通知欄のデータ同期は手動で行う必要がある
@@ -362,13 +442,14 @@ export default {
         })
         if (mp3tag.tags.v2.APIC) {
           const fileType = mp3tag.tags.v2.APIC[0].format
-          //サムネイルはUnit8Array型式になっているので、Base64に変換する
+          //サムネイルはUnit8Array型式になっているので、Blobに変換する
           const unit8array = new Uint8Array(mp3tag.tags.v2.APIC[0].data)
           const blob = new Blob([unit8array], {
             type: fileType,
           })
           const blobUrl = URL.createObjectURL(blob)
 
+          this.files[folderIndex].files[fileIndex].thumbnailBlob = blob
           this.files[folderIndex].files[fileIndex].thumbnail = blobUrl
           //最後の曲まで処理が終わったら、通知を更新するためにスタンバイを送る
           if (
