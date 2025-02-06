@@ -1,6 +1,6 @@
 # Dopamine
 
-Android Music Player
+[公式ホームページはここです！](https://dopamine.enoki.xyz)
 
 <img width="240" src="./public/logo.png">
 
