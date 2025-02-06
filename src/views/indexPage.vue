@@ -736,6 +736,15 @@ export default {
       }
     })
 
+    setInterval(() => {
+      if (!this.$refs.player.paused) {
+        CapacitorMusicControls.updateElapsed({
+          elapsed: this.currentTime * 1000,
+          isPlaying: true,
+        })
+      }
+    }, 1000)
+
     //スタンバイ
     this.play(undefined, undefined, undefined, true)
   },
