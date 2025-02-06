@@ -292,6 +292,10 @@ export default {
           CapacitorMusicControls.updateIsPlaying({
             isPlaying: false, // affects Android only
           })
+          CapacitorMusicControls.updateElapsed({
+            elapsed: this.currentTime * 1000,
+            isPlaying: false,
+          })
         }
       } else {
         CapacitorMusicControls.updateIsPlaying({
