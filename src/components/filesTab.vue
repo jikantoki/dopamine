@@ -2,7 +2,7 @@
   .files-tab
     .folders(v-for="(folder, folderIndex) in files")
       .folder-title(
-        @click="folder.onDisplay = !folder.onDisplay"
+        @click="toggleFolder(folderIndex)"
       )
         p.folder-title-p {{ folder.title }}({{ folder.files.length }})
         v-icon.folder-hidden-icon {{ folder.onDisplay ? 'mdi-folder-open-outline' : 'mdi-folder' }}
@@ -31,6 +31,19 @@
       @next="nextButton"
       @move="move"
     )
+    .command-space
+      v-btn(
+        icon="mdi-reload"
+        size="large"
+        variant="text"
+        @click="reload"
+      )
+      v-btn(
+        icon="mdi-magnify"
+        size="large"
+        variant="text"
+        disabled
+      )
 </template>
 
 <script>
@@ -97,6 +110,12 @@ export default {
       const calcedSec = Math.floor(sec % 60)
       const min = Math.floor((sec % 3600) / 60)
       return `${String(min).padStart(2, 0)}:${String(calcedSec).padStart(2, 0)}`
+    },
+    toggleFolder(folderIndex) {
+      this.$emit('toggleFolder', folderIndex)
+    },
+    reload() {
+      this.$emit('reload')
     },
   },
 }
@@ -176,6 +195,11 @@ img {
         }
       }
     }
+  }
+  .command-space {
+    background: rgb(var(--v-theme-surface-light));
+    display: flex;
+    justify-content: space-between;
   }
 }
 </style>

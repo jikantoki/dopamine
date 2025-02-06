@@ -43,6 +43,8 @@
               @pauseButton="pause"
               @nextButton="next"
               @move="move"
+              @toggleFolder="toggleFolder"
+              @reload="reload"
             )
           v-window-item.player-window(value="settings")
             p Settings
@@ -205,6 +207,10 @@ export default {
       musicDuration: 0,
       /** 現在の再生位置 */
       currentTime: 0,
+      /** 楽曲の読み込みが完了しているか？ */
+      fileLoaded: false,
+      /** ストレージから設定を読み込んだフラグ */
+      loadSetting: false,
     }
   },
   methods: {
@@ -295,6 +301,8 @@ export default {
           th.playStatus = true
         }, 1)
       }
+      //現在の状況をストレージに保存
+      this.saveData()
     },
     /** 一時停止 */
     pause() {
@@ -303,6 +311,8 @@ export default {
       CapacitorMusicControls.updateIsPlaying({
         isPlaying: false, // affects Android only
       })
+      //現在の状況をストレージに保存
+      this.saveData()
     },
     /** 戻る */
     prev() {
@@ -342,6 +352,8 @@ export default {
           this.$refs.player.paused
         )
       }
+      //現在の状況をストレージに保存
+      this.saveData()
     },
     /**
      * 進む
@@ -417,6 +429,8 @@ export default {
           this.$refs.player.paused && !forcePlay
         )
       }
+      //現在の状況をストレージに保存
+      this.saveData()
     },
     /** 再生速度の変更 */
     speedChange(newSpeed) {
@@ -424,12 +438,16 @@ export default {
         this.$refs.player.playbackRate = newSpeed
         this.speed = newSpeed
       }
+      //現在の状況をストレージに保存
+      this.saveData()
     },
     /** 再生位置の移動（moveValueパーセントまで曲を進める） */
     move(moveValue) {
       /** 現在再生中の曲の長さ */
       const duration = this.$refs.player.duration
       this.$refs.player.currentTime = (duration * moveValue) / 100
+      //現在の状況をストレージに保存
+      this.saveData()
     },
     /** blobをbase64に変換 */
     blobToBase64(blob) {
@@ -455,12 +473,16 @@ export default {
         recursive: true,
       })
     },
-    /** ストレージからファイル読み込み */
-    async readFile(path) {
+    /**
+     * ストレージからファイル読み込み
+     * @param {String} path ファイルのパス
+     * @param {boolean} [loadAsUTF8=true] UTF8で読み込むか？
+     */
+    async readFile(path, loadAsUTF8 = true) {
       const contents = await Filesystem.readFile({
         path: `${this.dataDirectory}${path}`,
         directory: Directory.External,
-        encoding: Encoding.UTF8,
+        encoding: loadAsUTF8 ? Encoding.UTF8 : undefined,
       })
       return contents
     },
@@ -479,60 +501,161 @@ export default {
       })
       return contents.uri
     },
-  },
-  async mounted() {
-    try {
-      await this.writeFile('text.txt', 'This is あ test')
-      await this.readFile('text.txt')
-      await this.getUri('text.txt')
-      await this.deleteFile('text.txt')
-    } catch (e) {
-      console.log(e)
-      Toast.show({ text: String(e) })
-    }
-
-    //全曲タグ検索する
-    //これは非同期で実行されているので、
-    //通知欄のデータ同期は手動で行う必要がある
-    this.files.forEach(async (folder, folderIndex) => {
-      folder.files.forEach(async (file, fileIndex) => {
-        const res = await fetch(file.address)
-        const arybuf = await res.arrayBuffer()
-        const mp3tag = new MP3Tag(arybuf)
-        mp3tag.read()
-        this.files[folderIndex].files[fileIndex].title = mp3tag.tags.title
-        if (!this.files[folderIndex].files[fileIndex].title) {
-          this.files[folderIndex].files[fileIndex].title = file.address
-        }
-        this.files[folderIndex].files[fileIndex].artist = mp3tag.tags.artist
-        this.files[folderIndex].files[fileIndex].album = mp3tag.tags.album
-        const audio = new Audio()
-        audio.src = file.address
-        audio.load()
-        audio.addEventListener('loadedmetadata', () => {
-          this.files[folderIndex].files[fileIndex].duration = audio.duration
+    /** アプリの状態をストレージに保存 */
+    async saveData() {
+      if (!this.fileLoaded) {
+        console.log(
+          'アプリがファイル読み込み中のためデータ保存をスキップしました'
+        )
+        return
+      }
+      const files = this.files.map((folder) => {
+        const file = folder.files.map((file) => {
+          return {
+            address: file.address,
+            title: file.title,
+            artist: file.artist,
+            album: file.album,
+            duration: file.duration,
+          }
         })
-        if (mp3tag.tags.v2.APIC) {
-          const fileType = mp3tag.tags.v2.APIC[0].format
-          //サムネイルはUnit8Array型式になっているので、Blobに変換する
-          const unit8array = new Uint8Array(mp3tag.tags.v2.APIC[0].data)
-          const blob = new Blob([unit8array], {
-            type: fileType,
-          })
-          const blobUrl = URL.createObjectURL(blob)
+        return {
+          title: folder.title,
+          files: file,
+          onDisplay: folder.onDisplay,
+        }
+      })
+      const nowPlaying = {
+        address: this.nowPlaying.address,
+        title: this.nowPlaying.title,
+        artist: this.nowPlaying.artist,
+        album: this.nowPlaying.album,
+      }
+      const settings = {
+        files: files,
+        repeat: this.repeat,
+        random: this.random,
+        speed: this.speed,
+        nowPlaying: nowPlaying,
+        current: this.current,
+        tab: this.tab,
+        musicDuration: this.musicDuration,
+        currentTime: this.currentTime,
+      }
+      try {
+        await this.writeFile('settings.json', JSON.stringify(settings))
+      } catch (e) {
+        console.log(e)
+      }
+    },
+    /** フォルダーの表示/非表示切り替え */
+    toggleFolder(folderIndex) {
+      this.files[folderIndex].onDisplay = !this.files[folderIndex].onDisplay
+      this.saveData()
+    },
+    /**
+     * 全曲タグ検索する
+     * これは非同期で実行されているので、
+     * 通知欄のデータ同期は手動で行う必要がある
+     * @param {boolean} [forceReset=false] Trueの場合、強制で全部リロード
+     */
+    tagSearch(forceReset = false) {
+      if (forceReset) {
+        Toast.show({ text: 'Now loading…' })
+      }
+      this.files.forEach(async (folder, folderIndex) => {
+        folder.files.forEach(async (file, fileIndex) => {
+          const res = await fetch(file.address)
+          const arybuf = await res.arrayBuffer()
+          const mp3tag = new MP3Tag(arybuf)
+          mp3tag.read()
+          if (!this.loadSetting || forceReset) {
+            this.files[folderIndex].files[fileIndex].title = mp3tag.tags.title
+            if (!this.files[folderIndex].files[fileIndex].title) {
+              this.files[folderIndex].files[fileIndex].title = file.address
+            }
+            this.files[folderIndex].files[fileIndex].artist = mp3tag.tags.artist
+            this.files[folderIndex].files[fileIndex].album = mp3tag.tags.album
+            const audio = new Audio()
+            audio.src = file.address
+            audio.load()
+            audio.addEventListener('loadedmetadata', () => {
+              this.files[folderIndex].files[fileIndex].duration = audio.duration
+            })
+          }
+          if (mp3tag.tags.v2.APIC) {
+            const fileType = mp3tag.tags.v2.APIC[0].format
+            //サムネイルはUnit8Array型式になっているので、Blobに変換する
+            const unit8array = new Uint8Array(mp3tag.tags.v2.APIC[0].data)
+            const blob = new Blob([unit8array], {
+              type: fileType,
+            })
+            const blobUrl = URL.createObjectURL(blob)
 
-          this.files[folderIndex].files[fileIndex].thumbnailBlob = blob
-          this.files[folderIndex].files[fileIndex].thumbnail = blobUrl
+            this.files[folderIndex].files[fileIndex].thumbnailBlob = blob
+            this.files[folderIndex].files[fileIndex].thumbnail = blobUrl
+          }
           //最後の曲まで処理が終わったら、通知を更新するためにスタンバイを送る
           if (
             this.files.length - 1 == folderIndex &&
             this.files[folderIndex].files.length - 1 == fileIndex
           ) {
+            this.nowPlaying.thumbnail =
+              this.files[this.current.folderIndex].files[
+                this.current.fileIndex
+              ].thumbnail
+            this.nowPlaying.thumbnailBlob =
+              this.files[this.current.folderIndex].files[
+                this.current.fileIndex
+              ].thumbnailBlob
             this.play(undefined, undefined, undefined, true)
+            this.fileLoaded = true
+            if (forceReset) {
+              Toast.show({ text: '再読み込みしました' })
+              //データをストレージに保存
+              this.saveData()
+            }
           }
-        }
+        })
       })
-    })
+    },
+    /** ファイルの再読み込み */
+    reload() {
+      this.tagSearch(true)
+    },
+  },
+  watch: {
+    random: function () {
+      this.saveData()
+    },
+    repeat: function () {
+      this.saveData()
+    },
+    tab: function () {
+      this.saveData()
+    },
+  },
+  async mounted() {
+    //設定を復元
+    try {
+      const jsonSettings = await this.readFile('settings.json')
+      const settings = JSON.parse(jsonSettings.data)
+      this.current = settings.current
+      this.files = settings.files
+      this.nowPlaying = settings.nowPlaying
+      this.random = settings.random
+      this.repeat = settings.repeat
+      this.speed = settings.speed
+      this.loadSetting = true
+      this.tab = settings.tab
+      this.musicDuration = settings.musicDuration
+      this.$refs.player.currentTime = settings.currentTime
+    } catch (e) {
+      console.log(e)
+    }
+
+    //タグ検索
+    this.tagSearch()
 
     //終わったら次の曲の再生
     this.$refs.player.addEventListener('ended', () => this.next(true))
@@ -567,6 +690,11 @@ export default {
         this.currentTime = 0
       }
     }, 50)
+
+    //定期的に設定をストレージに保存
+    setInterval(() => {
+      this.saveData()
+    }, 3000)
 
     //端末側の楽曲コントロールの命令用
     const th = this

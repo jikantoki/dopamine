@@ -1,3 +1,4 @@
+<!-- eslint-disable no-irregular-whitespace -->
 <template lang="pug">
   .player-tab(:class="mini ? 'mini' : 'notmini'")
     .controls
@@ -6,9 +7,9 @@
           img(:src='filename && filename.thumbnail ? filename.thumbnail : "/thumbnail_default.jpg"')
         .music-info
           p.title {{ filename ? filename.title ? filename.title : filename.address : null }}
-          p.artist {{ filename && filename.artist ? filename.artist : null }}
-          p.album {{ filename && filename.album ? filename.album : null }}
-          .seek-bar.mt-12.mb-6(
+          p.artist {{ filename && filename.artist ? filename.artist : '　' }}
+          p.album {{ filename && filename.album ? filename.album : '　' }}
+          .seek-bar.mt-8.mb-6(
             @click="seekbar"
             @touchstart.stop
             @touchend.stop
@@ -107,7 +108,7 @@
         :step="0.05"
       )
       v-card-actions
-        v-btn 決定
+        v-btn(@click="speedDialog = false") 決定
 </template>
 
 <script>
@@ -280,7 +281,7 @@ img {
           max-width: 25em;
           aspect-ratio: 1;
           object-fit: cover;
-          border-radius: 10%;
+          border-radius: 5%;
         }
       }
     }
