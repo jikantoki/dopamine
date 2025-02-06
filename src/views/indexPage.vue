@@ -342,8 +342,6 @@ export default {
      */
     next(forcePlay = false) {
       //リピートフラグが立っていたら、同じ曲を流す
-      console.log(this.$refs.player.paused)
-      Toast.show({ text: this.$refs.player.paused })
       if (this.repeat) {
         this.play(
           this.files[this.current.folderIndex].files[this.current.fileIndex],
@@ -352,6 +350,32 @@ export default {
           this.$refs.player.paused && !forcePlay
         )
         this.$refs.player.currentTime = 0
+        return
+      }
+      //ランダムフラグが立っていたら、ランダムな曲を流す
+      if (this.random) {
+        const getRandomInt = (max) => {
+          return Math.floor(Math.random() * max)
+        }
+        let folderIndex
+        let fileIndex
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          folderIndex = getRandomInt(this.files.length)
+          fileIndex = getRandomInt(this.files[folderIndex].files.length)
+          if (
+            this.current.folderIndex != folderIndex ||
+            this.current.fileIndex != fileIndex
+          ) {
+            break
+          }
+        }
+        this.play(
+          this.files[folderIndex].files[fileIndex],
+          folderIndex,
+          fileIndex,
+          this.$refs.player.paused && !forcePlay
+        )
         return
       }
       //同じフォルダーの次トラックへの移動を試みる
