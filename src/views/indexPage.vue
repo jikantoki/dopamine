@@ -256,7 +256,7 @@ export default {
           album: this.nowPlaying.album, // optional, default: ''
           cover: thumbnailURL, // optional, default : nothing
 
-          duration: this.nowPlaying.duration * 1000, // Android use ms
+          duration: this.musicDuration * 1000, // Android use ms
           elapsed: 0,
 
           // hide previous/next/close buttons:
@@ -303,6 +303,7 @@ export default {
           elapsed: this.currentTime * 1000,
           isPlaying: true,
         })
+        console.log(`${this.currentTime} / ${this.musicDuration}`)
         const th = this
         setTimeout(function () {
           th.$refs.player.play()
@@ -724,6 +725,11 @@ export default {
         default:
           break
       }
+    })
+
+    //シークバー用（開発中）
+    document.addEventListener('controlsNotification', (event) => {
+      Toast.show({ text: JSON.stringify(event) })
     })
 
     //スタンバイ
