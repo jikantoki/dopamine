@@ -1,0 +1,60 @@
+{
+  "name": "Dopamine",
+  "short_name": "Dopamine",
+  "description": "合法的に能汁を出す、楽曲再生アプリ",
+  "theme_color": "#00aa66",
+  "background_color": "#000000",
+  "display": "standalone",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "assets/icons/icon-48.webp",
+      "type": "image/png",
+      "sizes": "48x48"
+    },
+    {
+      "src": "assets/icons/icon-72.webp",
+      "type": "image/png",
+      "sizes": "72x72"
+    },
+    {
+      "src": "assets/icons/icon-96.webp",
+      "type": "image/png",
+      "sizes": "96x96"
+    },
+    {
+      "src": "assets/icons/icon-128.webp",
+      "type": "image/png",
+      "sizes": "128x128"
+    },
+    {
+      "src": "assets/icons/icon-192.webp",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "assets/icons/icon-256.webp",
+      "type": "image/png",
+      "sizes": "256x256"
+    },
+    {
+      "src": "assets/icons/icon-512.webp",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/screenshots/player-tab.jpg",
+      "sizes": "1080x2400",
+      "type": "image/jpg",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "assets/screenshots/files-tab.jpg",
+      "sizes": "1080x2400",
+      "type": "image/jpg",
+      "form_factor": "narrow"
+    }
+  ]
+}
