@@ -12,15 +12,28 @@
     v-btn.mt-4(
       size="x-large"
       @click="openSettings"
+      append-icon="mdi-cog-outline"
     ) 設定を開く
     v-btn(
       size="large"
       @click="viewPermissionSettings = false"
+      append-icon="mdi-chevron-right"
     ) 許可しました
     v-btn.mb-4(
       size="large"
       @click="close"
+      append-icon="mdi-close"
     ) 今は辞めとく
+  v-card.permission-settings(
+    v-show="viewPermissionSettings"
+    title="または..."
+  ).add-preinstall
+    v-btn.mb-4(
+      size="large"
+      style="width: 100%;"
+      append-icon="mdi-music"
+      @click="addPreinstall"
+    ) プリインストールの楽曲を追加する
   v-card.permission-settings(
     v-show="!viewPermissionSettings"
     title="ファイル追加"
@@ -74,10 +87,19 @@
     .buttons
       v-btn.my-2(
         size="x-large"
-        style="display: block; width: 100%;"
+        style="width: 100%;"
         @click="useDirectory(currentDirectory)"
         :loading="loading"
+        append-icon="mdi-import"
       ) このディレクトリを使う
+    .buttons
+      v-btn.my-2(
+        size="x-large"
+        style="width: 100%;"
+        @click="close"
+        :loading="loading"
+        append-icon="mdi-backspace-outline"
+      ) キャンセル
 </template>
 
 <script>
@@ -158,6 +180,9 @@ export default {
     },
     useDirectory(currentDirectory) {
       this.$emit('addPlaylist', currentDirectory)
+    },
+    addPreinstall() {
+      this.$emit('addPreinstall')
     },
   },
   async mounted() {

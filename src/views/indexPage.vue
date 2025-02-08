@@ -13,11 +13,12 @@
               :status="playStatus"
               :duration="musicDuration"
               :currentTime="currentTime"
-              :currentFolder="files[current.folderIndex].title"
+              :currentFolder="files[0] ? files[current.folderIndex].title : ''"
               :fileIndex="current.fileIndex"
               :repeat="repeat"
               :random="random"
               :speed="speed"
+              :noFile="!files[0]"
               ref="playerTab"
               @prev="prev"
               @play="play"
@@ -31,6 +32,7 @@
             )
           v-window-item.player-window(value="file")
             filesTab(
+              ref="filesTab"
               :files="files"
               :status="playStatus"
               :duration="musicDuration"
@@ -46,6 +48,7 @@
               @toggleFolder="toggleFolder"
               @reload="reload"
               @addFiles="folderPicker"
+              @remove="remove"
             )
           v-window-item.player-window(value="settings")
             p Settings
@@ -58,6 +61,7 @@
       :loading="addPlaylistLoading"
       @close="folderPickerDialog = false"
       @addPlaylist="addPlaylist"
+      @addPreinstall="addPreinstall"
     )
 </template>
 
@@ -195,6 +199,8 @@ export default {
           ],
         },
       ],
+      /** プリインストールの楽曲 */
+      preinstallFiles: [],
       /** リピートするか？ */
       repeat: false,
       /** ランダム再生するか？ */
@@ -353,6 +359,10 @@ export default {
     },
     /** 戻る */
     prev() {
+      //ファイルがない場合何もしない
+      if (!this.files[0]) {
+        return
+      }
       //同じフォルダーの前トラックへの移動を試みる
       if (
         this.files[this.current.folderIndex].files[this.current.fileIndex - 1]
@@ -397,6 +407,10 @@ export default {
      * @param {Boolean} [forcePlay = false] Trueにすると強制的に再生開始
      */
     next(forcePlay = false) {
+      //ファイルがない場合何もしない
+      if (!this.files[0]) {
+        return
+      }
       //リピートフラグが立っていたら、同じ曲を流す
       if (this.repeat) {
         this.play(
@@ -687,31 +701,36 @@ export default {
       return dir.files
     },
     /** 指定されたディレクトリ以下の全ファイルをプレイリストに追加 */
-    async addPlaylist(path, loopNow = false) {
+    async addPlaylist(path, loopNow = false, addPreinstall = false) {
       if (!loopNow) {
         this.playlistBuffer = []
         this.addPlaylistLoading = true
       }
 
-      const directory = await this.searchDir(path)
-      for (const subDirectory of directory) {
-        console.log(subDirectory)
-        switch (subDirectory.type) {
-          case 'file':
-            switch (subDirectory.name.slice(-4)) {
-              case '.mp3':
-              case '.wav':
-                this.playlistBuffer.push(subDirectory.uri)
-                break
-              default:
-                break
-            }
-            break
-          case 'directory':
-            await this.addPlaylist(`${path}/${subDirectory.name}`, true)
-            break
-          default:
-            break
+      if (addPreinstall) {
+        for (const music of this.preinstallFiles[0].files) {
+          this.playlistBuffer.push(music.address)
+        }
+      } else {
+        const directory = await this.searchDir(path)
+        for (const subDirectory of directory) {
+          switch (subDirectory.type) {
+            case 'file':
+              switch (subDirectory.name.slice(-4)) {
+                case '.mp3':
+                case '.wav':
+                  this.playlistBuffer.push(subDirectory.uri)
+                  break
+                default:
+                  break
+              }
+              break
+            case 'directory':
+              await this.addPlaylist(`${path}/${subDirectory.name}`, true)
+              break
+            default:
+              break
+          }
         }
       }
 
@@ -720,7 +739,12 @@ export default {
           const decodedMusic = decodeURIComponent(music)
           const splited = decodedMusic.split('/')
           const address = Capacitor.convertFileSrc(decodedMusic)
-          const directoryName = decodeURIComponent(splited[splited.length - 2])
+          let directoryName
+          if (addPreinstall) {
+            directoryName = 'きのこ鍋 - ときえのき'
+          } else {
+            directoryName = decodeURIComponent(splited[splited.length - 2])
+          }
           let alreadyAdded = false
           const filesBuffer = this.files
 
@@ -769,6 +793,34 @@ export default {
         this.folderPickerDialog = false
       }
     },
+    /**
+     * ファイルの削除
+     * @param {string} type 'folder'または'file'
+     * @param {number} folderIndex 何番目のフォルダーを消すか？
+     * @param {number} fileIndex 何番目のファイルを消すか？
+     */
+    remove(type, folderIndex, fileIndex) {
+      console.log(type)
+      console.log(folderIndex)
+      console.log(fileIndex)
+      if (type == 'folder') {
+        this.files.splice(folderIndex, 1)
+      }
+      if (type == 'file') {
+        this.files[folderIndex].files.splice(fileIndex, 1)
+        if (!this.files[folderIndex].files.length) {
+          this.files.splice(folderIndex, 1)
+        }
+      }
+      if (!this.files[0]) {
+        this.$refs.filesTab.closeEdit()
+      }
+      this.saveData()
+    },
+    /** プリインストールの楽曲を追加する */
+    addPreinstall() {
+      this.addPlaylist(null, false, true)
+    },
   },
   watch: {
     random: function () {
@@ -782,6 +834,8 @@ export default {
     },
   },
   async mounted() {
+    //プリインストール楽曲リストを初期化
+    this.preinstallFiles = this.files
     //設定を復元
     try {
       const jsonSettings = await this.readFile('settings.json')

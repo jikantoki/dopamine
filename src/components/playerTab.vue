@@ -4,7 +4,7 @@
     .controls
       .main-screen(v-if="!mini")
         .cover-img
-          img(:src='filename && filename.thumbnail ? filename.thumbnail : "/thumbnail_default.jpg"')
+          img(:src='filename && filename.thumbnail && !noFile ? filename.thumbnail : "/thumbnail_default.jpg"')
         .music-info
           p.title {{ filename ? filename.title ? filename.title : filename.address : null }}
           p.artist {{ filename && filename.artist ? filename.artist : '　' }}
@@ -164,6 +164,11 @@ export default {
     },
     /** ランダム再生するか？ */
     random: {
+      type: Boolean,
+      default: false,
+    },
+    /** ファイルが存在しないフラグ */
+    noFile: {
       type: Boolean,
       default: false,
     },

@@ -5,6 +5,12 @@
         .folder-title(
           @click="toggleFolder(folderIndex)"
         )
+          v-btn.remove-icon(
+              v-show="editScreen"
+              icon="mdi-trash-can"
+              variant="text"
+              @click.stop="remove('folder', folderIndex)"
+          )
           p.folder-title-p {{ folder.title }}({{ folder.files.length }})
           v-icon.folder-hidden-icon {{ folder.onDisplay ? 'mdi-folder-open-outline' : 'mdi-folder' }}
         .folder-file(v-show="folder.onDisplay")
@@ -14,6 +20,12 @@
             :class="currentFilePos.folderIndex == folderIndex && currentFilePos.fileIndex == fileIndex ? 'now-playing' : ''"
             v-ripple
           )
+            v-btn.remove-icon(
+              v-show="editScreen"
+              icon="mdi-trash-can"
+              variant="text"
+              @click.stop="remove('file', folderIndex, fileIndex)"
+            )
             img(v-if="file.thumbnail" :src="file.thumbnail")
             .no-img(v-if="!file.thumbnail")
             .text-music-info
@@ -49,7 +61,8 @@
         icon="mdi-minus"
         size="large"
         variant="text"
-        disabled
+        @click="editScreen = !editScreen"
+        :disabled="!files[0]"
       )
       v-btn(
         icon="mdi-magnify"
@@ -64,6 +77,12 @@ import playerTabVue from './playerTab.vue'
 export default {
   components: {
     playerTabVue,
+  },
+  data() {
+    return {
+      /** 楽曲選択画面か？ */
+      editScreen: false,
+    }
   },
   props: {
     /** 読み込んだファイル達 */
@@ -137,6 +156,18 @@ export default {
       const splited = path.split('/')
       return splited[splited.length - 1]
     },
+    /**
+     * ファイルの削除
+     * @param {string} type 'folder'または'file'
+     * @param {number} folderIndex 何番目のフォルダーを消すか？
+     * @param {number} fileIndex 何番目のファイルを消すか？
+     */
+    remove(type, folderIndex, fileIndex) {
+      this.$emit('remove', type, folderIndex, fileIndex)
+    },
+    closeEdit() {
+      this.editScreen = false
+    },
   },
 }
 </script>
@@ -159,11 +190,14 @@ img {
       .folder-title {
         font-size: 1.3em;
         height: 2em;
-        align-content: center;
         overflow: hidden;
         position: relative;
         background-color: #305030;
-        .folder-title-p,
+        display: flex;
+        align-items: center;
+        .remove-icon {
+          color: red;
+        }
         .folder-hidden-icon {
           position: absolute;
           top: 50%;
@@ -189,6 +223,9 @@ img {
           max-width: 100%;
           width: 100%;
           position: relative;
+          .remove-icon {
+            color: red;
+          }
           img,
           .no-img {
             width: 3em;
