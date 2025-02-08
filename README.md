@@ -10,7 +10,13 @@
 
 ## Download
 
+### 最新版
+
 [ここをクリックしてダウンロード](https://raw.githubusercontent.com/jikantoki/dopamine/refs/heads/master/dopamine.apk)
+
+### 安定板
+
+[ここをクリックしてダウンロード](https://raw.githubusercontent.com/jikantoki/dopamine/refs/heads/master/dopamine-stable.apk)
 
 ## Vue Android App Template
 
