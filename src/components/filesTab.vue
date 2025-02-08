@@ -1,24 +1,25 @@
 <template lang="pug">
   .files-tab
-    .folders(v-for="(folder, folderIndex) in files")
-      .folder-title(
-        @click="toggleFolder(folderIndex)"
-      )
-        p.folder-title-p {{ folder.title }}({{ folder.files.length }})
-        v-icon.folder-hidden-icon {{ folder.onDisplay ? 'mdi-folder-open-outline' : 'mdi-folder' }}
-      .folder-file(v-show="folder.onDisplay")
-        button.play-button(
-          v-for="(file, fileIndex) in folder.files"
-          @click="play(file, folderIndex, fileIndex)"
-          :class="currentFilePos.folderIndex == folderIndex && currentFilePos.fileIndex == fileIndex ? 'now-playing' : ''"
-          v-ripple
+    .folders-wrap
+      .folders(v-for="(folder, folderIndex) in files")
+        .folder-title(
+          @click="toggleFolder(folderIndex)"
         )
-          img(v-if="file.thumbnail" :src="file.thumbnail")
-          .no-img(v-if="!file.thumbnail")
-          .text-music-info
-            p.title {{ file.title ? `${file.title} - ${file.artist}` : file.address }}
-            .duration
-              p {{ calcTime(file.duration) }}
+          p.folder-title-p {{ folder.title }}({{ folder.files.length }})
+          v-icon.folder-hidden-icon {{ folder.onDisplay ? 'mdi-folder-open-outline' : 'mdi-folder' }}
+        .folder-file(v-show="folder.onDisplay")
+          button.play-button(
+            v-for="(file, fileIndex) in folder.files"
+            @click="play(file, folderIndex, fileIndex)"
+            :class="currentFilePos.folderIndex == folderIndex && currentFilePos.fileIndex == fileIndex ? 'now-playing' : ''"
+            v-ripple
+          )
+            img(v-if="file.thumbnail" :src="file.thumbnail")
+            .no-img(v-if="!file.thumbnail")
+            .text-music-info
+              p.title {{ file.title ? `${file.title} - ${file.artist}` : getFilename(file.address) }}
+              .duration
+                p {{ calcTime(file.duration) }}
     playerTabVue(
       mini=true
       :filename="currentFilename"
@@ -132,6 +133,10 @@ export default {
     addFiles() {
       this.$emit('addFiles')
     },
+    getFilename(path) {
+      const splited = path.split('/')
+      return splited[splited.length - 1]
+    },
   },
 }
 </script>
@@ -146,66 +151,71 @@ img {
   height: 100%;
   white-space: nowrap;
   overflow: hidden;
-  .folders {
-    height: -webkit-fill-available;
-    .folder-title {
-      font-size: 1.3em;
-      height: 2em;
-      align-content: center;
-      overflow: hidden;
-      position: relative;
-      .folder-title-p,
-      .folder-hidden-icon {
-        position: absolute;
-        top: 50%;
-        transform: translate(0%, -50%);
-      }
-      .folder-title-p {
-        left: 0.1em;
-      }
-      .folder-hidden-icon {
-        right: 0.1em;
-      }
-    }
-    .folder-file {
-      .now-playing {
-        background: rgb(var(--v-theme-surface-light));
-        .text-music-info > .duration {
-          background: rgb(var(--v-theme-surface-light)) !important;
-        }
-      }
-      .play-button {
-        display: flex;
-        align-items: center;
-        max-width: 100%;
-        width: 100%;
+  overflow-y: auto;
+  .folders-wrap {
+    overflow-y: auto;
+    height: 100%;
+    .folders {
+      .folder-title {
+        font-size: 1.3em;
+        height: 2em;
+        align-content: center;
+        overflow: hidden;
         position: relative;
-        img,
-        .no-img {
-          width: 3em;
-          min-width: 3em;
-          height: 3em;
-          margin: 4px;
-          border-radius: 10%;
+        background-color: #305030;
+        .folder-title-p,
+        .folder-hidden-icon {
+          position: absolute;
+          top: 50%;
+          transform: translate(0%, -50%);
         }
-        .text-music-info {
-          margin: 4px;
+        .folder-title-p {
+          left: 0.1em;
+        }
+        .folder-hidden-icon {
+          right: 0.1em;
+        }
+      }
+      .folder-file {
+        .now-playing {
+          background: rgb(var(--v-theme-surface-light));
+          .text-music-info > .duration {
+            background: rgb(var(--v-theme-surface-light)) !important;
+          }
+        }
+        .play-button {
           display: flex;
           align-items: center;
-          font-size: 1.3em;
-          justify-content: space-between;
-          width: -webkit-fill-available;
-          font-weight: 300;
-          .title {
-            overflow: hidden;
+          max-width: 100%;
+          width: 100%;
+          position: relative;
+          img,
+          .no-img {
+            width: 3em;
+            min-width: 3em;
+            height: 3em;
+            margin: 4px;
+            border-radius: 10%;
           }
-          .duration {
-            position: absolute;
-            right: 0;
-            background: rgb(var(--v-theme-surface));
-            padding: 4px;
-            p {
-              opacity: 0.5;
+          .text-music-info {
+            margin: 4px;
+            display: flex;
+            align-items: center;
+            font-size: 1.3em;
+            justify-content: space-between;
+            width: -webkit-fill-available;
+            font-weight: 300;
+            .title {
+              overflow: hidden;
+            }
+            .duration {
+              position: absolute;
+              right: 0;
+              background: rgb(var(--v-theme-surface));
+              padding: 4px;
+              p {
+                opacity: 0.5;
+              }
             }
           }
         }

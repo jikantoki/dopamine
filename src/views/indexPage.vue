@@ -50,8 +50,15 @@
           v-window-item.player-window(value="settings")
             p Settings
   audio(:src="nowPlaying ? nowPlaying.address : null" ref="player")
-  v-dialog.folderPicker(v-model="folderPickerDialog")
-    folderPicker
+  v-dialog.folderPicker(
+    v-model="folderPickerDialog"
+    persistent
+  )
+    folderPicker(
+      :loading="addPlaylistLoading"
+      @close="folderPickerDialog = false"
+      @addPlaylist="addPlaylist"
+    )
 </template>
 
 <script>
@@ -63,6 +70,7 @@ import folderPicker from '@/components/folderPicker.vue'
 import { CapacitorMusicControls } from 'capacitor-music-controls-plugin'
 const MP3Tag = require('mp3tag.js')
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem'
+import { Capacitor } from '@capacitor/core'
 
 export default {
   components: {
@@ -218,6 +226,10 @@ export default {
       loadSetting: false,
       /** フォルダーピッカーが動いているか？ */
       folderPickerDialog: false,
+      /** プレイリスト追加時の一時的なバッファ */
+      playlistBuffer: [],
+      /** プレイリスト追加時の読み込み中表示フラグ */
+      addPlaylistLoading: false,
     }
   },
   methods: {
@@ -290,9 +302,11 @@ export default {
           })
         // TODO: Update playback state.
       }
-      this.$refs.player.addEventListener('loadedmetadata', () => {
-        this.musicDuration = this.$refs.player.duration
-      })
+      if (this.$refs.player) {
+        this.$refs.player.addEventListener('loadedmetadata', () => {
+          this.musicDuration = this.$refs.player.duration
+        })
+      }
       // audio要素が再生中でなければ、playingフラグを切る必要がある
       if (standbyFlag) {
         if (this.$refs.player && this.$refs.player.paused) {
@@ -581,62 +595,73 @@ export default {
      * これは非同期で実行されているので、
      * 通知欄のデータ同期は手動で行う必要がある
      * @param {boolean} [forceReset=false] Trueの場合、強制で全部リロード
+     * @param {boolean} [newSongOnly=false] Trueの場合、新規に入れた曲だけ
      */
-    tagSearch(forceReset = false) {
+    tagSearch(forceReset = false, newSongOnly = false) {
       if (forceReset) {
         Toast.show({ text: 'Now loading…' })
       }
       this.files.forEach(async (folder, folderIndex) => {
         folder.files.forEach(async (file, fileIndex) => {
-          const res = await fetch(file.address)
-          const arybuf = await res.arrayBuffer()
-          const mp3tag = new MP3Tag(arybuf)
-          mp3tag.read()
-          if (!this.loadSetting || forceReset) {
-            this.files[folderIndex].files[fileIndex].title = mp3tag.tags.title
-            if (!this.files[folderIndex].files[fileIndex].title) {
-              this.files[folderIndex].files[fileIndex].title = file.address
+          let skipFlag = false
+          if (newSongOnly) {
+            if (file.title || file.artist) {
+              skipFlag = true
             }
-            this.files[folderIndex].files[fileIndex].artist = mp3tag.tags.artist
-            this.files[folderIndex].files[fileIndex].album = mp3tag.tags.album
-            const audio = new Audio()
-            audio.src = file.address
-            audio.load()
-            audio.addEventListener('loadedmetadata', () => {
-              this.files[folderIndex].files[fileIndex].duration = audio.duration
-            })
           }
-          if (mp3tag.tags.v2.APIC) {
-            const fileType = mp3tag.tags.v2.APIC[0].format
-            //サムネイルはUnit8Array型式になっているので、Blobに変換する
-            const unit8array = new Uint8Array(mp3tag.tags.v2.APIC[0].data)
-            const blob = new Blob([unit8array], {
-              type: fileType,
-            })
-            const blobUrl = URL.createObjectURL(blob)
+          if (!skipFlag) {
+            const res = await fetch(file.address)
+            const arybuf = await res.arrayBuffer()
+            const mp3tag = new MP3Tag(arybuf)
+            mp3tag.read()
+            if (!this.loadSetting || forceReset) {
+              this.files[folderIndex].files[fileIndex].title = mp3tag.tags.title
+              if (!this.files[folderIndex].files[fileIndex].title) {
+                this.files[folderIndex].files[fileIndex].title = file.address
+              }
+              this.files[folderIndex].files[fileIndex].artist =
+                mp3tag.tags.artist
+              this.files[folderIndex].files[fileIndex].album = mp3tag.tags.album
+              const audio = new Audio()
+              audio.src = file.address
+              audio.load()
+              audio.addEventListener('loadedmetadata', () => {
+                this.files[folderIndex].files[fileIndex].duration =
+                  audio.duration
+              })
+            }
+            if (mp3tag.tags.v2 && mp3tag.tags.v2.APIC) {
+              const fileType = mp3tag.tags.v2.APIC[0].format
+              //サムネイルはUnit8Array型式になっているので、Blobに変換する
+              const unit8array = new Uint8Array(mp3tag.tags.v2.APIC[0].data)
+              const blob = new Blob([unit8array], {
+                type: fileType,
+              })
+              const blobUrl = URL.createObjectURL(blob)
 
-            this.files[folderIndex].files[fileIndex].thumbnailBlob = blob
-            this.files[folderIndex].files[fileIndex].thumbnail = blobUrl
-          }
-          //最後の曲まで処理が終わったら、通知を更新するためにスタンバイを送る
-          if (
-            this.files.length - 1 == folderIndex &&
-            this.files[folderIndex].files.length - 1 == fileIndex
-          ) {
-            this.nowPlaying.thumbnail =
-              this.files[this.current.folderIndex].files[
-                this.current.fileIndex
-              ].thumbnail
-            this.nowPlaying.thumbnailBlob =
-              this.files[this.current.folderIndex].files[
-                this.current.fileIndex
-              ].thumbnailBlob
-            this.play(undefined, undefined, undefined, true)
-            this.fileLoaded = true
-            if (forceReset) {
-              Toast.show({ text: '再読み込みしました' })
-              //データをストレージに保存
-              this.saveData()
+              this.files[folderIndex].files[fileIndex].thumbnailBlob = blob
+              this.files[folderIndex].files[fileIndex].thumbnail = blobUrl
+            }
+            //最後の曲まで処理が終わったら、通知を更新するためにスタンバイを送る
+            if (
+              this.files.length - 1 == folderIndex &&
+              this.files[folderIndex].files.length - 1 == fileIndex
+            ) {
+              this.nowPlaying.thumbnail =
+                this.files[this.current.folderIndex].files[
+                  this.current.fileIndex
+                ].thumbnail
+              this.nowPlaying.thumbnailBlob =
+                this.files[this.current.folderIndex].files[
+                  this.current.fileIndex
+                ].thumbnailBlob
+              this.play(undefined, undefined, undefined, true)
+              this.fileLoaded = true
+              if (forceReset) {
+                Toast.show({ text: '再読み込みしました' })
+                //データをストレージに保存
+                this.saveData()
+              }
             }
           }
         })
@@ -646,16 +671,103 @@ export default {
     reload() {
       this.tagSearch(true)
     },
+    /** ファイル追加ダイアログを表示 */
     async folderPicker() {
       this.folderPickerDialog = true
-      /*
+    },
+    /**
+     * 指定ディレクトリのファイル一覧を取得
+     * @param {string} [path=''] このディレクトリ以下を探す
+     */
+    async searchDir(path = '') {
       const dir = await Filesystem.readdir({
         directory: Directory.ExternalStorage,
-        path: '',
+        path: path,
       })
-      console.log(JSON.stringify(dir))
-      alert(JSON.stringify(dir))
-      */
+      return dir.files
+    },
+    /** 指定されたディレクトリ以下の全ファイルをプレイリストに追加 */
+    async addPlaylist(path, loopNow = false) {
+      if (!loopNow) {
+        this.playlistBuffer = []
+        this.addPlaylistLoading = true
+      }
+
+      const directory = await this.searchDir(path)
+      for (const subDirectory of directory) {
+        console.log(subDirectory)
+        switch (subDirectory.type) {
+          case 'file':
+            switch (subDirectory.name.slice(-4)) {
+              case '.mp3':
+              case '.wav':
+                this.playlistBuffer.push(subDirectory.uri)
+                break
+              default:
+                break
+            }
+            break
+          case 'directory':
+            await this.addPlaylist(`${path}/${subDirectory.name}`, true)
+            break
+          default:
+            break
+        }
+      }
+
+      if (!loopNow) {
+        for (const music of this.playlistBuffer) {
+          const decodedMusic = decodeURIComponent(music)
+          const splited = decodedMusic.split('/')
+          const address = Capacitor.convertFileSrc(decodedMusic)
+          const directoryName = decodeURIComponent(splited[splited.length - 2])
+          let alreadyAdded = false
+          const filesBuffer = this.files
+
+          //既にファイルが追加されている場合は、スキップする
+          for (const folder of filesBuffer) {
+            if (folder.title == directoryName) {
+              for (const file of folder.files) {
+                if (file.address == address) {
+                  alreadyAdded = true
+                }
+              }
+            }
+          }
+          if (alreadyAdded) {
+            continue
+          }
+
+          let folderIndex = 0
+          let continueFlag = false
+          for (const folder of filesBuffer) {
+            if (folder.title == directoryName) {
+              this.files[folderIndex].files.push({
+                address: address,
+              })
+              continueFlag = true
+              continue
+            }
+            folderIndex += 1
+          }
+          if (continueFlag) {
+            continue
+          }
+          this.files.push({
+            title: directoryName,
+            onDisplay: true,
+            files: [
+              {
+                address: address,
+              },
+            ],
+          })
+        }
+        this.tagSearch(false, true)
+        Toast.show({ text: `${this.playlistBuffer.length}曲読み込みました` })
+        this.addPlaylistLoading = false
+        this.folderPickerDialog = false
+      }
     },
   },
   watch: {
@@ -692,7 +804,9 @@ export default {
     this.tagSearch()
 
     //終わったら次の曲の再生
-    this.$refs.player.addEventListener('ended', () => this.next(true))
+    if (this.$refs.player) {
+      this.$refs.player.addEventListener('ended', () => this.next(true))
+    }
 
     //通知欄の再生ボタンを準備
     CapacitorMusicControls.create({
@@ -775,6 +889,7 @@ export default {
 
 <style lang="scss">
 .wrap-div {
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   position: absolute;
