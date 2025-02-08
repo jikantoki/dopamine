@@ -1,6 +1,13 @@
 <template lang="pug">
   .files-tab
     .folders-wrap
+      v-btn.remove-all(
+        append-icon="mdi-trash-can"
+        color="red"
+        size="x-large"
+        v-show="editScreen"
+        @click="remove('all')"
+      ) Remove All
       .folders(v-for="(folder, folderIndex) in files")
         .folder-title(
           @click="toggleFolder(folderIndex)"
@@ -45,17 +52,23 @@
       @move="move"
     )
     .command-space
+      .loading(v-show="!fileLoaded")
+        p.mx-4.loading-p Now loading...
+        v-progress-circular(indeterminate)
       v-btn(
         icon="mdi-reload"
         size="large"
         variant="text"
         @click="reload"
+        v-show="fileLoaded"
       )
       v-btn(
         icon="mdi-plus"
         size="large"
         variant="text"
+        :disabled="editScreen"
         @click="addFiles"
+        v-show="fileLoaded"
       )
       v-btn(
         icon="mdi-minus"
@@ -63,6 +76,7 @@
         variant="text"
         @click="editScreen = !editScreen"
         :disabled="!files[0]"
+        v-show="fileLoaded"
       )
       v-btn(
         icon="mdi-magnify"
@@ -111,6 +125,11 @@ export default {
       type: Number,
       default: 0,
     },
+    /** ファイルが全て読み込み済みか？ */
+    fileLoaded: {
+      type: Boolean,
+      default: true,
+    },
   },
   methods: {
     /** 楽曲再生 */
@@ -158,7 +177,7 @@ export default {
     },
     /**
      * ファイルの削除
-     * @param {string} type 'folder'または'file'
+     * @param {string} type 'folder'または'file'または'all'
      * @param {number} folderIndex 何番目のフォルダーを消すか？
      * @param {number} fileIndex 何番目のファイルを消すか？
      */
@@ -185,7 +204,11 @@ img {
   overflow-y: auto;
   .folders-wrap {
     overflow-y: auto;
+    overflow-x: hidden;
     height: 100%;
+    .remove-all {
+      width: 100%;
+    }
     .folders {
       .folder-title {
         font-size: 1.3em;
@@ -233,6 +256,7 @@ img {
             height: 3em;
             margin: 4px;
             border-radius: 10%;
+            object-fit: cover;
           }
           .text-music-info {
             margin: 4px;
@@ -263,6 +287,13 @@ img {
     background: rgb(var(--v-theme-surface-light));
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    .loading {
+      display: flex;
+      .loading-p {
+        font-size: 1.3em;
+      }
+    }
   }
 }
 </style>

@@ -6,7 +6,7 @@
         .cover-img
           img(:src='filename && filename.thumbnail && !noFile ? filename.thumbnail : "/thumbnail_default.jpg"')
         .music-info
-          p.title {{ filename ? filename.title ? filename.title : filename.address : null }}
+          p.title {{ calcTitle(filename) }}
           p.artist {{ filename && filename.artist ? filename.artist : '　' }}
           p.album {{ filename && filename.album ? filename.album : '　' }}
           .seek-bar.mt-8.mb-6(
@@ -184,6 +184,19 @@ export default {
     }
   },
   methods: {
+    /** 良い感じのタイトルを付ける */
+    calcTitle(filename) {
+      if (filename) {
+        if (filename.title) {
+          return filename.title
+        } else {
+          const splited = filename.address.split('/')
+          return splited[splited.length]
+        }
+      } else {
+        return null
+      }
+    },
     /** 楽曲再生 */
     play() {
       this.$emit('play')

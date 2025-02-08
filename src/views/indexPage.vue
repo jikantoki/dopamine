@@ -40,6 +40,7 @@
               @play="play"
               :currentFilename="nowPlaying"
               :currentFilePos="current"
+              :fileLoaded="fileLoaded"
               @prevButton="prev"
               @playButton="play"
               @pauseButton="pause"
@@ -611,75 +612,102 @@ export default {
      * @param {boolean} [forceReset=false] Trueの場合、強制で全部リロード
      * @param {boolean} [newSongOnly=false] Trueの場合、新規に入れた曲だけ
      */
-    tagSearch(forceReset = false, newSongOnly = false) {
+    async tagSearch(forceReset = false, newSongOnly = false) {
+      /**
+       * @param {EventTarget} eventTarget
+       * @param {string} eventName
+       */
+      const eventPromisify = (eventTarget, eventName) => {
+        return new Promise((resolve) => {
+          eventTarget.addEventListener(eventName, (...args) => resolve(...args))
+        })
+      }
+      if (newSongOnly) {
+        this.fileLoaded = false
+      }
       if (forceReset) {
         Toast.show({ text: 'Now loading…' })
+        this.fileLoaded = false
       }
-      this.files.forEach(async (folder, folderIndex) => {
-        folder.files.forEach(async (file, fileIndex) => {
-          let skipFlag = false
-          if (newSongOnly) {
-            if (file.title || file.artist) {
-              skipFlag = true
-            }
-          }
-          if (!skipFlag) {
-            const res = await fetch(file.address)
-            const arybuf = await res.arrayBuffer()
-            const mp3tag = new MP3Tag(arybuf)
-            mp3tag.read()
-            if (!this.loadSetting || forceReset) {
-              this.files[folderIndex].files[fileIndex].title = mp3tag.tags.title
-              if (!this.files[folderIndex].files[fileIndex].title) {
-                this.files[folderIndex].files[fileIndex].title = file.address
+      const audio = new Audio()
+      let folderIndex = 0
+      for (const folder of this.files) {
+        if (folder.files) {
+          let fileIndex = 0
+          for (const file of folder.files) {
+            let skipFlag = false
+            if (newSongOnly && !forceReset) {
+              if (file.album && file.artist) {
+                skipFlag = true
               }
-              this.files[folderIndex].files[fileIndex].artist =
-                mp3tag.tags.artist
-              this.files[folderIndex].files[fileIndex].album = mp3tag.tags.album
-              const audio = new Audio()
-              audio.src = file.address
-              audio.load()
-              audio.addEventListener('loadedmetadata', () => {
+            }
+            if (!skipFlag) {
+              const res = await fetch(file.address)
+              const arybuf = await res.arrayBuffer()
+              const mp3tag = new MP3Tag(arybuf)
+              mp3tag.read()
+              if (!this.loadSetting || forceReset || newSongOnly) {
+                this.files[folderIndex].files[fileIndex].title =
+                  mp3tag.tags.title
+                if (!this.files[folderIndex].files[fileIndex].title) {
+                  this.files[folderIndex].files[fileIndex].title = file.address
+                }
+                this.files[folderIndex].files[fileIndex].artist =
+                  mp3tag.tags.artist
+                this.files[folderIndex].files[fileIndex].album =
+                  mp3tag.tags.album
+              }
+              if (!file.duration || forceReset) {
+                audio.src = file.address
+                audio.load()
+                await eventPromisify(audio, 'loadedmetadata')
                 this.files[folderIndex].files[fileIndex].duration =
                   audio.duration
-              })
-            }
-            if (mp3tag.tags.v2 && mp3tag.tags.v2.APIC) {
-              const fileType = mp3tag.tags.v2.APIC[0].format
-              //サムネイルはUnit8Array型式になっているので、Blobに変換する
-              const unit8array = new Uint8Array(mp3tag.tags.v2.APIC[0].data)
-              const blob = new Blob([unit8array], {
-                type: fileType,
-              })
-              const blobUrl = URL.createObjectURL(blob)
+              }
+              if (mp3tag.tags.v2 && mp3tag.tags.v2.APIC) {
+                const fileType = mp3tag.tags.v2.APIC[0].format
+                //サムネイルはUnit8Array型式になっているので、Blobに変換する
+                const unit8array = new Uint8Array(mp3tag.tags.v2.APIC[0].data)
+                const blob = new Blob([unit8array], {
+                  type: fileType,
+                })
+                const blobUrl = URL.createObjectURL(blob)
 
-              this.files[folderIndex].files[fileIndex].thumbnailBlob = blob
-              this.files[folderIndex].files[fileIndex].thumbnail = blobUrl
-            }
-            //最後の曲まで処理が終わったら、通知を更新するためにスタンバイを送る
-            if (
-              this.files.length - 1 == folderIndex &&
-              this.files[folderIndex].files.length - 1 == fileIndex
-            ) {
-              this.nowPlaying.thumbnail =
-                this.files[this.current.folderIndex].files[
-                  this.current.fileIndex
-                ].thumbnail
-              this.nowPlaying.thumbnailBlob =
-                this.files[this.current.folderIndex].files[
-                  this.current.fileIndex
-                ].thumbnailBlob
-              this.play(undefined, undefined, undefined, true)
-              this.fileLoaded = true
-              if (forceReset) {
-                Toast.show({ text: '再読み込みしました' })
-                //データをストレージに保存
-                this.saveData()
+                this.files[folderIndex].files[fileIndex].thumbnailBlob = blob
+                this.files[folderIndex].files[fileIndex].thumbnail = blobUrl
+              }
+              //最後の曲まで処理が終わったら、通知を更新するためにスタンバイを送る
+              if (
+                this.files.length - 1 == folderIndex &&
+                this.files[folderIndex].files.length - 1 == fileIndex
+              ) {
+                this.nowPlaying.thumbnail =
+                  this.files[this.current.folderIndex].files[
+                    this.current.fileIndex
+                  ].thumbnail
+                this.nowPlaying.thumbnailBlob =
+                  this.files[this.current.folderIndex].files[
+                    this.current.fileIndex
+                  ].thumbnailBlob
+                this.play(undefined, undefined, undefined, true)
+                this.fileLoaded = true
+                if (forceReset) {
+                  Toast.show({ text: '再読み込みしました' })
+                  this.fileLoaded = true
+                  //データをストレージに保存
+                  this.saveData()
+                }
+                if (newSongOnly) {
+                  this.fileLoaded = true
+                }
               }
             }
+            //await this.sleep(1500)
+            fileIndex += 1
           }
-        })
-      })
+        }
+        folderIndex += 1
+      }
     },
     /** ファイルの再読み込み */
     reload() {
@@ -736,9 +764,11 @@ export default {
 
       if (!loopNow) {
         for (const music of this.playlistBuffer) {
-          const decodedMusic = decodeURIComponent(music)
+          const decodedMusic = addPreinstall ? music : decodeURIComponent(music)
           const splited = decodedMusic.split('/')
-          const address = Capacitor.convertFileSrc(decodedMusic)
+          const address = addPreinstall
+            ? music
+            : Capacitor.convertFileSrc(decodedMusic)
           let directoryName
           if (addPreinstall) {
             directoryName = 'きのこ鍋 - ときえのき'
@@ -787,6 +817,8 @@ export default {
             ],
           })
         }
+        this.saveData()
+        //新規で入れた曲をタグサーチする
         this.tagSearch(false, true)
         Toast.show({ text: `${this.playlistBuffer.length}曲読み込みました` })
         this.addPlaylistLoading = false
@@ -800,9 +832,9 @@ export default {
      * @param {number} fileIndex 何番目のファイルを消すか？
      */
     remove(type, folderIndex, fileIndex) {
-      console.log(type)
-      console.log(folderIndex)
-      console.log(fileIndex)
+      if (type == 'all') {
+        this.files = []
+      }
       if (type == 'folder') {
         this.files.splice(folderIndex, 1)
       }
@@ -820,6 +852,10 @@ export default {
     /** プリインストールの楽曲を追加する */
     addPreinstall() {
       this.addPlaylist(null, false, true)
+    },
+    /** async/awaitでtimeミリ秒待つ */
+    sleep(time) {
+      new Promise((resolve) => setTimeout(resolve, time))
     },
   },
   watch: {

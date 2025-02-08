@@ -15,7 +15,7 @@
       append-icon="mdi-cog-outline"
     ) 設定を開く
     v-btn(
-      size="large"
+      size="x-large"
       @click="viewPermissionSettings = false"
       append-icon="mdi-chevron-right"
     ) 許可しました
