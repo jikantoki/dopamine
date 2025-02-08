@@ -671,9 +671,19 @@ export default {
                 const blob = new Blob([unit8array], {
                   type: fileType,
                 })
+                const base64 = await this.blobToBase64(blob)
+                await this.writeFile(
+                  encodeURIComponent(file.address),
+                  base64,
+                  false
+                )
+                const path = `${this.dataDirectory}${encodeURIComponent(
+                  file.address
+                )}`
+                const uri = await this.getUri(path)
+                this.files[folderIndex].files[fileIndex].thumbnail = uri
                 const blobUrl = URL.createObjectURL(blob)
 
-                this.files[folderIndex].files[fileIndex].thumbnailBlob = blob
                 this.files[folderIndex].files[fileIndex].thumbnail = blobUrl
               }
               //最後の曲まで処理が終わったら、通知を更新するためにスタンバイを送る
