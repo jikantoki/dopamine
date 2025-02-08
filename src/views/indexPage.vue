@@ -45,10 +45,13 @@
               @move="move"
               @toggleFolder="toggleFolder"
               @reload="reload"
+              @addFiles="folderPicker"
             )
           v-window-item.player-window(value="settings")
             p Settings
   audio(:src="nowPlaying ? nowPlaying.address : null" ref="player")
+  v-dialog.folderPicker(v-model="folderPickerDialog")
+    folderPicker
 </template>
 
 <script>
@@ -56,6 +59,7 @@
 import { Toast } from '@capacitor/toast'
 import filesTab from '/src/components/filesTab.vue'
 import playerTab from '/src/components/playerTab.vue'
+import folderPicker from '@/components/folderPicker.vue'
 import { CapacitorMusicControls } from 'capacitor-music-controls-plugin'
 const MP3Tag = require('mp3tag.js')
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem'
@@ -64,6 +68,7 @@ export default {
   components: {
     filesTab,
     playerTab,
+    folderPicker,
   },
   data() {
     return {
@@ -211,6 +216,8 @@ export default {
       fileLoaded: false,
       /** ストレージから設定を読み込んだフラグ */
       loadSetting: false,
+      /** フォルダーピッカーが動いているか？ */
+      folderPickerDialog: false,
     }
   },
   methods: {
@@ -288,7 +295,7 @@ export default {
       })
       // audio要素が再生中でなければ、playingフラグを切る必要がある
       if (standbyFlag) {
-        if (this.$refs.player.paused) {
+        if (this.$refs.player && this.$refs.player.paused) {
           CapacitorMusicControls.updateIsPlaying({
             isPlaying: false, // affects Android only
           })
@@ -297,7 +304,7 @@ export default {
             isPlaying: false,
           })
         }
-      } else {
+      } else if (this.$refs.player) {
         CapacitorMusicControls.updateIsPlaying({
           isPlaying: true, // affects Android only
         })
@@ -639,6 +646,17 @@ export default {
     reload() {
       this.tagSearch(true)
     },
+    async folderPicker() {
+      this.folderPickerDialog = true
+      /*
+      const dir = await Filesystem.readdir({
+        directory: Directory.ExternalStorage,
+        path: '',
+      })
+      console.log(JSON.stringify(dir))
+      alert(JSON.stringify(dir))
+      */
+    },
   },
   watch: {
     random: function () {
@@ -741,7 +759,7 @@ export default {
     })
 
     setInterval(() => {
-      if (!this.$refs.player.paused) {
+      if (this.$refs.player && !this.$refs.player.paused) {
         CapacitorMusicControls.updateElapsed({
           elapsed: this.currentTime * 1000,
           isPlaying: true,

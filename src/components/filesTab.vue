@@ -42,7 +42,7 @@
         icon="mdi-plus"
         size="large"
         variant="text"
-        disabled
+        @click="addFiles"
       )
       v-btn(
         icon="mdi-minus"
@@ -129,6 +129,9 @@ export default {
     reload() {
       this.$emit('reload')
     },
+    addFiles() {
+      this.$emit('addFiles')
+    },
   },
 }
 </script>
@@ -142,6 +145,7 @@ img {
   flex-direction: column;
   height: 100%;
   white-space: nowrap;
+  overflow: hidden;
   .folders {
     height: -webkit-fill-available;
     .folder-title {

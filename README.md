@@ -43,6 +43,24 @@ yarn install
 npm install pug#何故か別で書かないと動かない
 ```
 
+### AndroidManifest.xml に以下の記述があることを確認する
+
+場所: /android/app/src/main/AndroidManifest.xml
+
+```xml
+<manifest>
+    <uses-permission
+    android:name="android.permission.READ_EXTERNAL_STORAGE"
+    android:maxSdkVersion="32"
+  />
+    <uses-permission
+    android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    android:maxSdkVersion="32"
+  />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+</manifest>
+```
+
 ### ブラウザ上での動作確認
 
 ```shell

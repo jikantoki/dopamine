@@ -13,6 +13,7 @@ dependencies {
     implementation project(':capacitor-filesystem')
     implementation project(':capacitor-toast')
     implementation project(':capacitor-music-controls-plugin')
+    implementation project(':capacitor-native-settings')
 
 }
 

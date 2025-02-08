@@ -27,6 +27,7 @@
     "@ionic/pwa-elements": "^3.3.0",
     "@mdi/font": "5.9.55",
     "capacitor-music-controls-plugin": "^6.1.0",
+    "capacitor-native-settings": "^7.0.1",
     "core-js": "^3.8.3",
     "mp3tag.js": "^3.11.2",
     "pug": "^3.0.3",
