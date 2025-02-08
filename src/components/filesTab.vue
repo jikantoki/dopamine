@@ -39,6 +39,18 @@
         @click="reload"
       )
       v-btn(
+        icon="mdi-plus"
+        size="large"
+        variant="text"
+        disabled
+      )
+      v-btn(
+        icon="mdi-minus"
+        size="large"
+        variant="text"
+        disabled
+      )
+      v-btn(
         icon="mdi-magnify"
         size="large"
         variant="text"
