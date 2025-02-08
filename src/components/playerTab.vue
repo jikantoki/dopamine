@@ -26,8 +26,8 @@
       .cover-img(v-if="mini")
         img(:src='filename && filename.thumbnail ? filename.thumbnail : "/thumbnail_default.jpg"')
       .music-info(v-if="mini")
-          p.title {{ filename ? filename.title ? filename.title : filename.address : null }}
-          p.artist {{ filename && filename.artist ? filename.artist : null }}
+          p.title {{ calcTitle(filename) }}
+          p.artist {{ filename && filename.artist ? filename.artist : '　' }}
       .control-buttons
         .buttons
           .main-buttons
@@ -187,11 +187,11 @@ export default {
     /** 良い感じのタイトルを付ける */
     calcTitle(filename) {
       if (filename) {
-        if (filename.title) {
+        if (filename.title && filename.title != '') {
           return filename.title
         } else {
           const splited = filename.address.split('/')
-          return splited[splited.length]
+          return splited[splited.length - 1]
         }
       } else {
         return null

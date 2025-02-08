@@ -101,10 +101,8 @@ export default {
               title: null,
               artist: null,
               album: null,
-              /** blob型式のサムネイルURL */
+              /** サムネイルURL */
               thumbnail: null,
-              /** blob本体 */
-              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -113,7 +111,6 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
-              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -122,7 +119,6 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
-              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -131,7 +127,6 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
-              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -140,7 +135,6 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
-              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -149,7 +143,6 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
-              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -158,7 +151,6 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
-              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -167,7 +159,6 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
-              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -176,7 +167,6 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
-              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -185,7 +175,6 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
-              thumbnailBlob: null,
               duration: 0,
             },
             {
@@ -194,7 +183,6 @@ export default {
               artist: null,
               album: null,
               thumbnail: null,
-              thumbnailBlob: null,
               duration: 0,
             },
           ],
@@ -270,10 +258,12 @@ export default {
         }
       }
       let thumbnailURL = 'thumbnail_default.jpg'
-      if (this.nowPlaying.thumbnailBlob) {
-        const base64 = await this.blobToBase64(this.nowPlaying.thumbnailBlob)
-        await this.writeFile('current-thumbnail.jpg', base64, false)
-        thumbnailURL = await this.getUri('current-thumbnail.jpg')
+      if (this.nowPlaying.thumbnailLocal) {
+        thumbnailURL = this.nowPlaying.thumbnailLocal
+      }
+      if (this.$refs.player) {
+        await this.eventPromisify(this.$refs.player, 'loadedmetadata')
+        this.musicDuration = this.$refs.player.duration
       }
       if (newfile || standbyFlag) {
         CapacitorMusicControls.create({
@@ -309,11 +299,6 @@ export default {
           })
         // TODO: Update playback state.
       }
-      if (this.$refs.player) {
-        this.$refs.player.addEventListener('loadedmetadata', () => {
-          this.musicDuration = this.$refs.player.duration
-        })
-      }
       // audio要素が再生中でなければ、playingフラグを切る必要がある
       if (standbyFlag) {
         if (this.$refs.player && this.$refs.player.paused) {
@@ -333,7 +318,6 @@ export default {
           elapsed: this.currentTime * 1000,
           isPlaying: true,
         })
-        console.log(`${this.currentTime} / ${this.musicDuration}`)
         const th = this
         setTimeout(function () {
           th.$refs.player.play()
@@ -520,7 +504,7 @@ export default {
       await Filesystem.writeFile({
         path: `${this.dataDirectory}${path}`,
         data: data,
-        directory: Directory.External,
+        directory: Directory.Data,
         encoding: saveAsUTF8 ? Encoding.UTF8 : undefined,
         recursive: true,
       })
@@ -533,7 +517,7 @@ export default {
     async readFile(path, loadAsUTF8 = true) {
       const contents = await Filesystem.readFile({
         path: `${this.dataDirectory}${path}`,
-        directory: Directory.External,
+        directory: Directory.Data,
         encoding: loadAsUTF8 ? Encoding.UTF8 : undefined,
       })
       return contents
@@ -542,20 +526,20 @@ export default {
     async deleteFile(path) {
       await Filesystem.deleteFile({
         path: `${this.dataDirectory}${path}`,
-        directory: Directory.External,
+        directory: Directory.Data,
       })
     },
     /** ストレージ上のファイルのフルパスを取得（file://型式） */
     async getUri(path) {
       const contents = await Filesystem.getUri({
         path: `${this.dataDirectory}${path}`,
-        directory: Directory.External,
+        directory: Directory.Data,
       })
       return contents.uri
     },
     /** アプリの状態をストレージに保存 */
-    async saveData() {
-      if (!this.fileLoaded) {
+    async saveData(forceSave = false) {
+      if (!this.fileLoaded && !forceSave) {
         console.log(
           'アプリがファイル読み込み中のためデータ保存をスキップしました'
         )
@@ -569,6 +553,8 @@ export default {
             artist: file.artist,
             album: file.album,
             duration: file.duration,
+            thumbnail: file.thumbnail,
+            thumbnailLocal: file.thumbnailLocal,
           }
         })
         return {
@@ -613,15 +599,6 @@ export default {
      * @param {boolean} [newSongOnly=false] Trueの場合、新規に入れた曲だけ
      */
     async tagSearch(forceReset = false, newSongOnly = false) {
-      /**
-       * @param {EventTarget} eventTarget
-       * @param {string} eventName
-       */
-      const eventPromisify = (eventTarget, eventName) => {
-        return new Promise((resolve) => {
-          eventTarget.addEventListener(eventName, (...args) => resolve(...args))
-        })
-      }
       if (newSongOnly) {
         this.fileLoaded = false
       }
@@ -641,29 +618,33 @@ export default {
                 skipFlag = true
               }
             }
+            if (!newSongOnly && !forceReset) {
+              if (file.duration && file.thumbnail) {
+                skipFlag = true
+              }
+            }
             if (!skipFlag) {
               const res = await fetch(file.address)
               const arybuf = await res.arrayBuffer()
               const mp3tag = new MP3Tag(arybuf)
               mp3tag.read()
-              if (!this.loadSetting || forceReset || newSongOnly) {
-                this.files[folderIndex].files[fileIndex].title =
-                  mp3tag.tags.title
-                if (!this.files[folderIndex].files[fileIndex].title) {
-                  this.files[folderIndex].files[fileIndex].title = file.address
-                }
-                this.files[folderIndex].files[fileIndex].artist =
-                  mp3tag.tags.artist
-                this.files[folderIndex].files[fileIndex].album =
-                  mp3tag.tags.album
-              }
+
+              //基本的な情報取得
+              this.files[folderIndex].files[fileIndex].title = mp3tag.tags.title
+              this.files[folderIndex].files[fileIndex].artist =
+                mp3tag.tags.artist
+              this.files[folderIndex].files[fileIndex].album = mp3tag.tags.album
+
+              //曲の長さ取得
               if (!file.duration || forceReset) {
                 audio.src = file.address
                 audio.load()
-                await eventPromisify(audio, 'loadedmetadata')
+                await this.eventPromisify(audio, 'loadedmetadata')
                 this.files[folderIndex].files[fileIndex].duration =
                   audio.duration
               }
+
+              //サムネイル取得
               if (mp3tag.tags.v2 && mp3tag.tags.v2.APIC) {
                 const fileType = mp3tag.tags.v2.APIC[0].format
                 //サムネイルはUnit8Array型式になっているので、Blobに変換する
@@ -672,52 +653,51 @@ export default {
                   type: fileType,
                 })
                 const base64 = await this.blobToBase64(blob)
-                await this.writeFile(
-                  encodeURIComponent(file.address),
-                  base64,
-                  false
-                )
-                const path = `${this.dataDirectory}${encodeURIComponent(
-                  file.address
-                )}`
+                const path = `${encodeURIComponent(file.address)}.jpg`
+                this.writeFile(path, base64, false)
                 const uri = await this.getUri(path)
-                this.files[folderIndex].files[fileIndex].thumbnail = uri
-                const blobUrl = URL.createObjectURL(blob)
-
-                this.files[folderIndex].files[fileIndex].thumbnail = blobUrl
-              }
-              //最後の曲まで処理が終わったら、通知を更新するためにスタンバイを送る
-              if (
-                this.files.length - 1 == folderIndex &&
-                this.files[folderIndex].files.length - 1 == fileIndex
-              ) {
-                this.nowPlaying.thumbnail =
-                  this.files[this.current.folderIndex].files[
-                    this.current.fileIndex
-                  ].thumbnail
-                this.nowPlaying.thumbnailBlob =
-                  this.files[this.current.folderIndex].files[
-                    this.current.fileIndex
-                  ].thumbnailBlob
-                this.play(undefined, undefined, undefined, true)
-                this.fileLoaded = true
-                if (forceReset) {
-                  Toast.show({ text: '再読み込みしました' })
-                  this.fileLoaded = true
-                  //データをストレージに保存
-                  this.saveData()
-                }
-                if (newSongOnly) {
-                  this.fileLoaded = true
-                }
+                const url = Capacitor.convertFileSrc(uri)
+                this.files[folderIndex].files[fileIndex].thumbnailLocal = uri
+                this.files[folderIndex].files[fileIndex].thumbnail = url
+              } else {
+                this.files[folderIndex].files[fileIndex].thumbnailLocal =
+                  'thumbnail_default.jpg'
+                this.files[folderIndex].files[fileIndex].thumbnail =
+                  'thumbnail_default.jpg'
               }
             }
-            //await this.sleep(1500)
             fileIndex += 1
           }
         }
+        this.saveData(true)
         folderIndex += 1
       }
+      //最後の曲まで処理が終わったら、通知を更新するためにスタンバイを送る
+      this.nowPlaying.thumbnail =
+        this.files[this.current.folderIndex].files[
+          this.current.fileIndex
+        ].thumbnail
+      this.play(undefined, undefined, undefined, true)
+      this.fileLoaded = true
+      if (forceReset) {
+        Toast.show({ text: '再読み込みしました' })
+        this.fileLoaded = true
+        //データをストレージに保存
+        this.saveData()
+      }
+      if (newSongOnly) {
+        this.fileLoaded = true
+      }
+    },
+    /**
+     * addeventlistenerが終わるのを待つ
+     * @param {EventTarget} eventTarget
+     * @param {string} eventName
+     */
+    eventPromisify(eventTarget, eventName) {
+      return new Promise((resolve) => {
+        eventTarget.addEventListener(eventName, (...args) => resolve(...args))
+      })
     },
     /** ファイルの再読み込み */
     reload() {
