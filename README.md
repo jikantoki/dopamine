@@ -16,10 +16,7 @@ Android ミュージックプレイヤー
 
 ## スクリーンショット
 
-<div style="display: flex;">
-  <img width="50%" src="./public/assets/screenshots/player-tab.jpg">
-  <img width="50%" src="./public/assets/screenshots/files-tab.jpg">
-</div>
+<img width="50%" src="./public/assets/screenshots/player-tab.jpg"><img width="50%" src="./public/assets/screenshots/files-tab.jpg">
 
 ## Download
 
