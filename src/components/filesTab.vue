@@ -9,8 +9,9 @@
         @click="remove('all')"
       ) Remove All
       .folders(v-for="(folder, folderIndex) in files")
-        .folder-title(
+        button.folder-title(
           @click="toggleFolder(folderIndex)"
+          v-ripple
         )
           v-btn.remove-icon(
               v-show="editScreen"
@@ -37,7 +38,7 @@
             .no-img(v-if="!file.thumbnail")
             .text-music-info
               p.title {{ file.title ? `${file.title} - ${file.artist}` : getFilename(file.address) }}
-              .duration
+              .duration(v-if="file.duration")
                 p {{ calcTime(file.duration) }}
     playerTabVue(
       mini=true
@@ -218,6 +219,7 @@ img {
         background-color: #305030;
         display: flex;
         align-items: center;
+        width: 100%;
         .remove-icon {
           color: red;
         }

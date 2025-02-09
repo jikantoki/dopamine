@@ -639,9 +639,16 @@ export default {
               if (!file.duration || forceReset) {
                 audio.src = file.address
                 audio.load()
-                await this.eventPromisify(audio, 'loadedmetadata')
-                this.files[folderIndex].files[fileIndex].duration =
-                  audio.duration
+                //これが永遠に終わらないファイルがある
+                try {
+                  await this.eventPromisify(audio, 'loadedmetadata')
+                } catch (e) {
+                  console.log(e)
+                }
+                if (audio.duration) {
+                  this.files[folderIndex].files[fileIndex].duration =
+                    audio.duration
+                }
               }
 
               //サムネイル取得
@@ -653,7 +660,15 @@ export default {
                   type: fileType,
                 })
                 const base64 = await this.blobToBase64(blob)
-                const path = `${encodeURIComponent(file.address)}.jpg`
+
+                //ファイル名が長くならないようにする
+                const domain = location.origin
+                //const addressWithoutDomain = file.address.replace(domain, '')
+                const addressWithoutDomain = file.address.replace(
+                  `${domain}/_capacitor_file_/`,
+                  ''
+                )
+                const path = `${addressWithoutDomain}.jpg`
                 this.writeFile(path, base64, false)
                 const uri = await this.getUri(path)
                 const url = Capacitor.convertFileSrc(uri)
@@ -666,6 +681,7 @@ export default {
                   'thumbnail_default.jpg'
               }
             }
+            this.saveData(true)
             fileIndex += 1
           }
         }
@@ -695,7 +711,10 @@ export default {
      * @param {string} eventName
      */
     eventPromisify(eventTarget, eventName) {
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
+        eventTarget.addEventListener('error', () => {
+          reject(new Error('error'))
+        })
         eventTarget.addEventListener(eventName, (...args) => resolve(...args))
       })
     },
@@ -866,6 +885,7 @@ export default {
     try {
       const jsonSettings = await this.readFile('settings.json')
       const settings = JSON.parse(jsonSettings.data)
+      this.tab = settings.tab
       this.current = settings.current
       this.files = settings.files
       this.nowPlaying = settings.nowPlaying
@@ -873,7 +893,6 @@ export default {
       this.repeat = settings.repeat
       this.speed = settings.speed
       this.loadSetting = true
-      this.tab = settings.tab
       this.musicDuration = settings.musicDuration
       this.$refs.player.currentTime = settings.currentTime
     } catch (e) {
