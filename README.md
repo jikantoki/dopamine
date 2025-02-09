@@ -2,21 +2,28 @@
 
 [公式ホームページはここです！](https://dopamine.enoki.xyz)
 
-<img width="240" src="./public/logo.png">
+<a href="https://dopamine.enoki.xyz" target="_blank">
+  <img width="40%" src="./public/logo.png">
+</a>
 
 ## 何ができる？
 
-私[ときえのき](https://enoki.xyz)が自作した曲が聞けるミュージックプレイヤー
+Android ミュージックプレイヤー
+
+## 特徴
+
+私[ときえのき](https://enoki.xyz)が自作した、ココだけの限定楽曲が聞けます！
+
+## スクリーンショット
+
+<div style="display: flex;">
+  <img width="50%" src="./public/assets/screenshots/player-tab.jpg">
+  <img width="50%" src="./public/assets/screenshots/files-tab.jpg">
+</div>
 
 ## Download
 
-### 最新版
-
 [ここをクリックしてダウンロード](https://raw.githubusercontent.com/jikantoki/dopamine/refs/heads/master/dopamine.apk)
-
-### 安定板
-
-[ここをクリックしてダウンロード](https://raw.githubusercontent.com/jikantoki/dopamine/refs/heads/master/dopamine-stable.apk)
 
 ## Vue Android App Template
 
