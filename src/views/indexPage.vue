@@ -41,6 +41,7 @@
               :currentFilename="nowPlaying"
               :currentFilePos="current"
               :fileLoaded="fileLoaded"
+              :parsent="parsent"
               @prevButton="prev"
               @playButton="play"
               @pauseButton="pause"
@@ -216,7 +217,7 @@ export default {
       /** 現在の再生位置 */
       currentTime: 0,
       /** 楽曲の読み込みが完了しているか？ */
-      fileLoaded: false,
+      fileLoaded: true,
       /** ストレージから設定を読み込んだフラグ */
       loadSetting: false,
       /** フォルダーピッカーが動いているか？ */
@@ -225,6 +226,8 @@ export default {
       playlistBuffer: [],
       /** プレイリスト追加時の読み込み中表示フラグ */
       addPlaylistLoading: false,
+      /** ファイルの読み込み完了割合 */
+      parsent: 0,
     }
   },
   methods: {
@@ -358,7 +361,7 @@ export default {
           ],
           this.current.folderIndex,
           this.current.fileIndex - 1,
-          this.$refs.player.paused
+          this.$refs.player && this.$refs.player.paused
         )
         //ない場合は、前フォルダーの最後トラックへの移動を試みる
       } else if (
@@ -402,7 +405,7 @@ export default {
           this.files[this.current.folderIndex].files[this.current.fileIndex],
           this.current.folderIndex,
           this.current.fileIndex,
-          this.$refs.player.paused && !forcePlay
+          this.$refs.player && this.$refs.player.paused && !forcePlay
         )
         this.$refs.player.currentTime = 0
         return
@@ -606,6 +609,12 @@ export default {
         Toast.show({ text: 'Now loading…' })
         this.fileLoaded = false
       }
+      this.parsent = 0
+      const folderLength = this.files.length
+      const fileLengths = []
+      for (const folder of this.files) {
+        fileLengths.push(folder.files.length)
+      }
       const audio = new Audio()
       let folderIndex = 0
       for (const folder of this.files) {
@@ -682,6 +691,11 @@ export default {
               }
             }
             this.saveData(true)
+            const folderPersent = (folderIndex / folderLength) * 100
+            const parsent =
+              folderPersent +
+              (fileIndex / fileLengths[folderIndex]) * 100 * (1 / folderLength)
+            this.parsent = parsent.toFixed(2)
             fileIndex += 1
           }
         }
@@ -892,15 +906,16 @@ export default {
       this.random = settings.random
       this.repeat = settings.repeat
       this.speed = settings.speed
-      this.loadSetting = true
       this.musicDuration = settings.musicDuration
       this.$refs.player.currentTime = settings.currentTime
+
+      this.loadSetting = true
     } catch (e) {
       console.log(e)
     }
 
     //タグ検索
-    this.tagSearch()
+    //this.tagSearch()
 
     //終わったら次の曲の再生
     if (this.$refs.player) {

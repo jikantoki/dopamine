@@ -54,7 +54,7 @@
     )
     .command-space
       .loading(v-show="!fileLoaded")
-        p.mx-4.loading-p Now loading...
+        p.mx-4.loading-p Now loading...{{ parsent }}%
         v-progress-circular(indeterminate)
       v-btn(
         icon="mdi-reload"
@@ -130,6 +130,11 @@ export default {
     fileLoaded: {
       type: Boolean,
       default: true,
+    },
+    /** ファイルの読み込み割合 */
+    parsent: {
+      type: Number,
+      default: 0,
     },
   },
   methods: {
