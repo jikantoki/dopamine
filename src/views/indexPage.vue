@@ -51,6 +51,7 @@
               @reload="reload"
               @addFiles="folderPicker"
               @remove="remove"
+              @loadCancel="loadCancelFlag = true"
             )
           v-window-item.player-window(value="settings")
             p Settings
@@ -228,6 +229,8 @@ export default {
       addPlaylistLoading: false,
       /** ファイルの読み込み完了割合 */
       parsent: 0,
+      /** これがTrueなら強制リロードを中止 */
+      loadCancelFlag: false,
     }
   },
   methods: {
@@ -566,11 +569,14 @@ export default {
           onDisplay: folder.onDisplay,
         }
       })
-      const nowPlaying = {
-        address: this.nowPlaying.address,
-        title: this.nowPlaying.title,
-        artist: this.nowPlaying.artist,
-        album: this.nowPlaying.album,
+      let nowPlaying
+      if (this.nowPlaying) {
+        nowPlaying = {
+          address: this.nowPlaying.address,
+          title: this.nowPlaying.title,
+          artist: this.nowPlaying.artist,
+          album: this.nowPlaying.album,
+        }
       }
       const settings = {
         files: files,
@@ -602,6 +608,7 @@ export default {
      * @param {boolean} [newSongOnly=false] Trueの場合、新規に入れた曲だけ
      */
     async tagSearch(forceReset = false, newSongOnly = false) {
+      this.loadCancelFlag = false
       if (newSongOnly) {
         this.fileLoaded = false
       }
@@ -620,7 +627,13 @@ export default {
       for (const folder of this.files) {
         if (folder.files) {
           let fileIndex = 0
+          if (this.loadCancelFlag) {
+            break
+          }
           for (const file of folder.files) {
+            if (this.loadCancelFlag) {
+              break
+            }
             let skipFlag = false
             if (newSongOnly && !forceReset) {
               if (file.album && file.artist) {
@@ -718,6 +731,7 @@ export default {
       if (newSongOnly) {
         this.fileLoaded = true
       }
+      this.loadCancelFlag = false
     },
     /**
      * addeventlistenerが終わるのを待つ

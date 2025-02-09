@@ -56,6 +56,7 @@
       .loading(v-show="!fileLoaded")
         p.mx-4.loading-p Now loading...{{ parsent }}%
         v-progress-circular(indeterminate)
+        v-btn(variant="text" @click="loadCancel") Cancel
       v-btn(
         icon="mdi-reload"
         size="large"
@@ -192,6 +193,9 @@ export default {
     },
     closeEdit() {
       this.editScreen = false
+    },
+    loadCancel() {
+      this.$emit('loadCancel')
     },
   },
 }
