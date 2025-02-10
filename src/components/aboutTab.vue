@@ -4,6 +4,7 @@
     p
       img.mx-1(src="/logo.png")
       span Dopamine
+  p by jikantoki
   .version
     p Version: {{ packageJson.version }}
   .ma-8
@@ -22,6 +23,7 @@
     .link(v-for="link of myLinks")
       a(:href="link.url" target="_blank")
         v-btn(:icon="link.icon" size="x-large" variant="text")
+  p.my-4 &copy;ときえのき
 </template>
 
 <script>
