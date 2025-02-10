@@ -4,7 +4,7 @@
       v-tabs(v-model="tab" bg-color="primary" fixed-tabs)
         v-tab(value="player") Player
         v-tab(value="file") File
-        v-tab(value="settings") Settings
+        v-tab(value="about") About
       v-card.wrap-item
         v-window(v-model="tab" style="height: 100%")
           v-window-item.player-window(value="player")
@@ -53,8 +53,8 @@
               @remove="remove"
               @loadCancel="loadCancelFlag = true"
             )
-          v-window-item.player-window(value="settings")
-            p Settings
+          v-window-item.player-window(value="about")
+            aboutTab
   audio(:src="nowPlaying ? nowPlaying.address : null" ref="player")
   v-dialog.folderPicker(
     v-model="folderPickerDialog"
@@ -73,6 +73,7 @@
 import { Toast } from '@capacitor/toast'
 import filesTab from '/src/components/filesTab.vue'
 import playerTab from '/src/components/playerTab.vue'
+import aboutTab from '@/components/aboutTab.vue'
 import folderPicker from '@/components/folderPicker.vue'
 import { CapacitorMusicControls } from 'capacitor-music-controls-plugin'
 const MP3Tag = require('mp3tag.js')
@@ -83,6 +84,7 @@ export default {
   components: {
     filesTab,
     playerTab,
+    aboutTab,
     folderPicker,
   },
   data() {
