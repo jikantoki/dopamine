@@ -13,7 +13,7 @@
               :status="playStatus"
               :duration="musicDuration"
               :currentTime="currentTime"
-              :currentFolder="files[0] ? files[current.folderIndex].title : ''"
+              :currentFolder="files[0] && current.folderIndex ? files[current.folderIndex].title : ''"
               :fileIndex="current.fileIndex"
               :repeat="repeat"
               :random="random"
@@ -245,16 +245,18 @@ export default {
      */
     async play(filename, folderIndex, fileIndex, standbyFlag = false) {
       /** 現在再生しているファイルと今から再生するファイルが違う場合はTrue */
-      let newfile = false
+      let newfile = true
       //再生するファイルを指定している？
       if (filename) {
         //現在再生しているファイルと、指定されているファイルが違うか？
         if (this.nowPlaying && filename.address != this.nowPlaying.address)
           newfile = true
         this.nowPlaying = filename
-        this.current = {
-          folderIndex: folderIndex,
-          fileIndex: fileIndex,
+        if (folderIndex && fileIndex) {
+          this.current = {
+            folderIndex: folderIndex,
+            fileIndex: fileIndex,
+          }
         }
         //指定がないので、とりあえず先頭をスタンバイ
       } else if (!this.nowPlaying) {
@@ -270,6 +272,7 @@ export default {
         thumbnailURL = this.nowPlaying.thumbnailLocal
       }
       if (this.$refs.player) {
+        this.$refs.player.load()
         await this.eventPromisify(this.$refs.player, 'loadedmetadata')
         this.musicDuration = this.$refs.player.duration
       }
@@ -318,7 +321,7 @@ export default {
             isPlaying: false,
           })
         }
-      } else if (this.$refs.player) {
+      } else {
         CapacitorMusicControls.updateIsPlaying({
           isPlaying: true, // affects Android only
         })
@@ -578,6 +581,9 @@ export default {
           title: this.nowPlaying.title,
           artist: this.nowPlaying.artist,
           album: this.nowPlaying.album,
+          duration: this.nowPlaying.duration,
+          thumbnail: this.nowPlaying.thumbnail,
+          thumbnailLocal: this.nowPlaying.thumbnailLocal,
         }
       }
       const settings = {
@@ -925,6 +931,12 @@ export default {
       this.musicDuration = settings.musicDuration
       this.$refs.player.currentTime = settings.currentTime
 
+      if (!this.current) {
+        this.current = {
+          folderIndex: 0,
+          fileIndex: 0,
+        }
+      }
       this.loadSetting = true
     } catch (e) {
       console.log(e)
@@ -1011,8 +1023,12 @@ export default {
       }
     }, 1000)
 
+    if (this.files[0]) {
+      this.nowPlaying =
+        this.files[this.current.folderIndex].files[this.current.fileIndex]
+    }
     //スタンバイ
-    this.play(undefined, undefined, undefined, true)
+    this.play(this.nowPlaying, undefined, undefined, true)
   },
 }
 </script>
